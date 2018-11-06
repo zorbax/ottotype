@@ -255,6 +255,10 @@ trimming() {
        $i\_R2.trim.fastq.gz $i.2U.trim.fastq.gz \
        SLIDINGWINDOW:5:20 MINLEN:70 &> $i.trim.log
     mv *U.trim.fastq.gz 1U2U
+
+    if [ $? -eq 0 ]; then
+        rm $i.trim.log
+    fi
   done
 }
 
