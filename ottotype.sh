@@ -346,6 +346,7 @@ assembly_stats_cov() {
     echo -e "N50:\t$N50" | tee -a $name.stats
     echo -e "N90:\t$N90" | tee -a $name.stats
     echo -e "$name\t$contigs_number\t$cover\t$assembly_size\t$large_contig\t$N50\t$N90" | tee -a assembly_$run_name.stats
+    find . -maxdepth 1 -type f \( -name "*.bam" -o -name "*.bai" \) -exec rm {} \;
   done
 }
 
