@@ -39,9 +39,9 @@ done
 
 ls *fastq.gz | grep -v SRR | cut -d\_ -f1,2 | sort | uniq > original_names.txt
 #Rename SRR files
-find -maxdepth 1 -type f -regex  '.*\(_1.fastq.gz\|_2.fastq.gz\)$' | \
+find -maxdepth 1 -type f -or -type l -regex  '.*\(_1.fastq.gz\|_2.fastq.gz\)$' | \
                         rename 's/_1.fastq/_R1.fastq/ ; s/_2.fastq/_R2.fastq/'
-find -maxdepth 1 -name "*fastq.gz" -type f | rename 's/_L001// ; s/_S[0-9]{1,}// ; s/_001//'
+find -maxdepth 1 -name "*fastq.gz" -type f -or -type l | rename 's/_L001// ; s/_S[0-9]{1,}// ; s/_001//'
 
 dir="set_$(basename `pwd`)"
 
