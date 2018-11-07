@@ -378,6 +378,32 @@ kmer_finder(){
   done
 }
 
+kraken_tax(){
+
+  run_name=$(basename `pwd` | cut -d\_ -f1)
+  mkdir -p $run_name\_kraken2 OUTPUT RESULTS
+
+  for i in $(ls *fastq.gz | grep -v trim | cut -d\_ -f1,2 | sort | uniq)
+  do
+    kraken2 --paired --gzip-compressed --threads $(nproc) \
+      --db $YGGDRASIL --report $run_name\_kraken2/$i.kraken2-report.tsv \
+      $i\_R1.fastq.gz $i\_R2.fastq.gz > /dev/null 2> $run_name\_kraken2/$i.kraken2.log
+
+    # sponge > sudo apt-get install moreutils
+    tax=`cat $run_name\_kraken2/$i.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
+         grep -P '\t[DPCOFGS]\t' | sed 's/D/K/' | awk -F'\t' '$4=tolower($4){ print $4"_", $6}' | \
+         sed -E 's/[ ]{1,}/_/g' | tr  "\n" ";" | sed 's/;$/\n/'`
+    echo -e "$i\t$tax" > $run_name\_kraken2/$i.tax.tsv
+    cat $run_name\_kraken2/$i.kraken2.log | tail -2 | paste - - | sed "s/^  /$i\t/" | sponge $run_name\_kraken2/$i.kraken2.log
+  done
+
+  cat $run_name\_kraken2/*tax.tsv | awk 'BEGIN { FS="\t"; OFS="\t" } { $2=$2 "\t" $2 } 1'| \
+      sed -e 's/k__/#/; s/s__/#/; s/\(#\).*\(#\)//' | sed -E 's/_S[0-9]{1,}//' | \
+      awk -F'\t' -v OFS='\t' '{gsub(";s_"," |",$2);gsub("_"," ",$2)}1' | \
+      perl -pe 'if(/\#/){s/\ /\_/g}' > OUTPUT/$run_name\_kraken.tax.tsv
+  cp OUTPUT/$run_name\_kraken.tax.tsv RESULTS/$run_name\_kraken.tax.tsv
+}
+
 ####   __  __       _
 ####  |  \/  | __ _(_)_ __
 ####  | |\/| |/ _` | | '_ \
@@ -457,10 +483,17 @@ if [ -s "nosalm_id_ncbi.txt" ]; then
   cd OTHERS
 
   file="../nosalm_id_ncbi.txt"
+  echo "Trimming"
   trimming
+  echo "Assembly"
   assembly
+  echo "Assembly stats"
   assembly_stats_cov
+  echo "Assembly mlst"
   assembly_mlst
+  echo "Kmerfinder"
   kmer_finder
+  echo "Kraken"
+  kraken_tax
   cd ..
 fi
