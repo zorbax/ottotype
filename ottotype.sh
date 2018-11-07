@@ -436,6 +436,8 @@ if [ -s "salm-like.txt" ]; then
   assembly
   echo "stats"
   assembly_stats_cov
+  echo "Assembly mlst"
+  assembly_mlst
   echo "kmerfinder"
   kmer_finder
   cd ..
