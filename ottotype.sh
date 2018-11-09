@@ -524,7 +524,7 @@ if [ -s "nosalm_id_ncbi.txt" ]; then
   kmer_finder
   echo "Kraken"
   kraken_tax
-  echo "Antobiotics"
+  echo "Antibiotics"
   antibiotics
   cd ..
 fi
