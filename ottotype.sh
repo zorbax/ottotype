@@ -84,7 +84,7 @@ screen_tax() {
   cat screen_tax_raw_ncbi.txt | grep "Reads\|Species" | sed 's/ /#/' | cut -d\# -f2 | \
       grep -B1 Salmonella | sed 's/--//; /^$/d' | paste - - | sort -k1 > salm_id_ncbi.txt
   cat screen_tax_raw_ncbi.txt | grep "Reads\|Species" | sed 's/ /#/' | cut -d\# -f2 | \
-      sed 's/--//; /^$/d' | paste - - | grep -v Salmonella | sed '/^$/d' | sort -k1 > nosalm_id_ncbi.txt
+      sed 's/--//; /^$/d' | paste - - | grep -v Salmonella | sed '/^$/d' | sort -k1 > nosalm_id_ncbi.txt 2>/dev/null
 
   if [ -s "salm_id.txt" ]; then
     #awk -F'\t' 'NR==FNR{salmid[$1]=$1;ncbi[$1]=$1;next};
