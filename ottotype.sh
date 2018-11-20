@@ -82,7 +82,7 @@ screen_tax() {
   done > screen_tax_raw_ncbi.txt
 
   cat screen_tax_raw_ncbi.txt | grep "Reads\|Species" | sed 's/ /#/' | cut -d\# -f2 | \
-      grep -B1 Salmonella | sed 's/--//; /^$/d' | paste - - | sort -k1 > salm_id_ncbi.txt
+      grep -B1 Salmonella | sed 's/--//; /^$/d' | paste - - | sort -k1 > salm_id_ncbi.txt 2>/dev/null
   cat screen_tax_raw_ncbi.txt | grep "Reads\|Species" | sed 's/ /#/' | cut -d\# -f2 | \
       sed 's/--//; /^$/d' | paste - - | grep -v Salmonella | sed '/^$/d' | sort -k1 > nosalm_id_ncbi.txt 2>/dev/null
 
