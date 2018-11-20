@@ -90,7 +90,7 @@ screen_tax() {
     #awk -F'\t' 'NR==FNR{salmid[$1]=$1;ncbi[$1]=$1;next};
     #      (1!=salmid[$1]){ print $1 }' <(sort -k1 salm_id.txt | cut -f1) <(sort -k2 salm_id_ncbi.txt | cut -f1) \
     #      > salm-like.txt 2> /dev/null
-    grep -vwif <(sort -k1 salm_id.txt | cut -f1) <(cut -f1 salm_id_ncbi.txt) > salm-like.txt
+    grep -vwif <(sort -k1 salm_id.txt | cut -f1) <(cut -f1 salm_id_ncbi.txt) > salm-like.txt 2>/dev/null
   fi
 
   for i in *txt
