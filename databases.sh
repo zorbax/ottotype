@@ -1,5 +1,30 @@
 #!/bin/bash
 
+if [ ! -d "$HOME/bin" ]; then
+  mkdir -p $HOME/bin
+  
+  cat <<EOF >> $HOME/.bashrc
+
+if [ -d "\$HOME/bin" ] ; then
+  export PATH="\$HOME/bin:\$PATH"
+fi
+
+EOF
+else
+  perl -e 'exit(!(grep(m{^$ENV{HOME}/bin$},split(":", $ENV{PATH}))) > 0)'
+  if [ $? != 0 ]; then
+    cat <<EOF >> $HOME/.bashrc
+
+if [ -d "\$HOME/bin" ] ; then
+  export PATH="\$HOME/bin:\$PATH"
+fi
+
+EOF
+  fi
+fi
+
+. ~/.bashrc && mkdir -p $HOME/bin/16S
+ 
 dbNCBI="$HOME/bin/16S/NCBI.gz"
 dbRDP="$HOME/bin/16S/RDP.gz"
 dbSILVA="$HOME/bin/16S/SILVA.gz"
@@ -7,7 +32,7 @@ dbSILVA="$HOME/bin/16S/SILVA.gz"
 if [ -f "$dbNCBI" ]; then
   esearch -db nucleotide -query '33175[BioProject] OR 33317[BioProject]' \
     | efetch -db nuccore -format fasta | gzip -9 > $HOME/bin/16S/NCBI.gz
-elif [ -f "$dbRDP"]; then
+elif [ -f "$dbRDP" ]; then
   wget --no-check-certificate https://rdp.cme.msu.edu/download/current_Bacteria_unaligned.fa.gz
     gunzip -c current_Bacteria_unaligned.fa.gz \
     | bioawk -cfastx '/\(T\)/{print ">" $name " " $comment "\n" toupper($seq)}' | gzip -9 \
