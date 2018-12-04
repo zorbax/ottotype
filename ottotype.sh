@@ -1,10 +1,25 @@
 #!/bin/bash
 
-set -e
+# set -euo pipefail
+
+: <<'END'
+source functions/utils.sh
+source functions/trimming.sh
+source functions/assembly_idba.sh
+source functions/salmonella_typing.sh
+#TODO > source functions/antibiotics.sh
+source functions/assembly_mlst.sh
+source functions/assembly_stats.sh
+source functions/small_samples.sh
+source functions/kmer_finder.sh
+source functions/screen_raw_tax.sh
+source functions/screen_assembly_tax.sh
+source functions/assembly_spades.sh
+END
 
 echo "===================================="
 echo "Serotyping pipeline from SSB-CNRDOGM"
-echo "               v0.9f                "
+echo "                                    "
 echo "===================================="
 
 ####   _____                 _   _
@@ -14,6 +29,22 @@ echo "===================================="
 ####  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
 ####
 
+display_usage() {
+  echo "This script must be run as $USER."
+  echo -e "\nUsage:\nJust run $0 in current working directory\n"
+}
+
+if [  $# == 1 ]
+then
+  display_usage
+  exit 1
+fi
+
+if [[ ( $# == "--help") ||  $# == "-h" ]]
+then
+  display_usage
+  exit 0
+fi
 
 clean() {
   find -maxdepth 1 -name "*fastq.gz" -type f -or -type l | rename 's/_L001//; s/_001//';
@@ -347,6 +378,20 @@ assembly_stats_cov() {
     echo -e "N90:\t$N90" | tee -a $name.stats
     echo -e "$name\t$contigs_number\t$cover\t$assembly_size\t$large_contig\t$N50\t$N90" | tee -a assembly_$run_name.stats
     find . -maxdepth 1 -type f \( -name "*.bam" -o -name "*.bai" \) -exec rm {} \;
+  done
+}
+
+assembly_spades() {
+  mkdir -p ASSEMBLY
+  memory=`awk '{ printf "%.2f", $2/1024/1024 ; exit}' /proc/meminfo | cut -d\. -f1`
+  for i in $(ls *trim.fastq.gz | cut -d\_ -f1,2 | sort | uniq)
+  do
+    spades.py --pe1-1 $i\_R1.trim.fastq.gz --pe1-2 $i\_R2.trim.fastq.gz \
+              --pe1-s 1U2U/$i.1U.trim.fastq.gz --pe1-s 1U2U/$i.2U.trim.fastq.gz \
+              -o $i\_spades -t $(nproc) -m $memory &>/dev/null
+
+  find $i\_spades -maxdepth 2 -type f -name 'scaffolds.fasta' -exec cp {} ASSEMBLY/$i-spades-assembly.fa \;
+  rm -rf $i\_spades
   done
 }
 
