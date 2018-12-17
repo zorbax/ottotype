@@ -491,7 +491,7 @@ antibiotics(){
 docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi
 memory=`awk '{ printf "%.2f", $2/1024/1024 ; exit}' /proc/meminfo | cut -d\. -f1`
 run_name=$(basename `pwd` | cut -d\_ -f1)
-: <<'END'
+
 echo "Clean"
 clean
 echo "Small samples"
@@ -517,7 +517,7 @@ if [ -s "salm_id.txt" ]; then
   assembly_stats_cov
   cd ..
 fi
-END
+
 echo "SALM-LIKE"
 
 if [ -s "salm-like.txt" ]; then
