@@ -135,7 +135,7 @@ screen_tax() {
 run_salmonella() {
   run_name=$(basename `pwd` | cut -d\_ -f1)
 
-  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
+  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
   mkdir -p SEQSERO_$run_name $PWD/OUTPUT
 
   if [ -z $file ]; then
@@ -173,7 +173,7 @@ run_salmonella() {
        cut -d\& -f1 | cut -d\@ -f1 | sed -E 's/_S[0-9]{1,}//' | grep -v "The predicted serotypes" | \
        paste - - - - - - | sort | sed 's/\t/\n/g' | cut -d\_ -f1 > $PWD/RESULTS/seqsero_$run_name\_serotype_sup.txt
 
-  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
+  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
 
   mkdir -p SRST2_$run_name
 
@@ -345,7 +345,7 @@ assembly_stats_cov() {
     echo -e "Assembly:\t$name" | tee $name.stats
     bwa index -a bwtsw $i -p $name 2> /dev/null
     bwa mem -t $(nproc) $name $reads\_R1.trim.fastq.gz $reads\_R2.trim.fastq.gz 2> /dev/null |\
-              samtools view -Sb -F4 - | samtools sort - $name.mapped.sorted
+              samtools view -Sb -F4 - | samtools sort - -o $name.mapped.sorted
     samtools index $name.mapped.sorted.bam
     rm $name.{bwt,pac,ann,amb,sa}
 
