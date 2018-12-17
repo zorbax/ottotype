@@ -328,7 +328,10 @@ assembly() {
     fi
 
     rm -rf *pp.{fq,bwt,sai,rbwt} *out *err *rsai *ec.{fq,fa} $i
-    mv $i-assembly.fa $PWD/ASSEMBLY
+
+    cat $i-assembly.fa | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
+         awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' > tmp && \
+         mv tmp $PWD/ASSEMBLY/$i-assembly.fa
   done
 }
 
@@ -345,7 +348,7 @@ assembly_stats_cov() {
     echo -e "Assembly:\t$name" | tee $name.stats
     bwa index -a bwtsw $i -p $name 2> /dev/null
     bwa mem -t $(nproc) $name $reads\_R1.trim.fastq.gz $reads\_R2.trim.fastq.gz 2> /dev/null |\
-              samtools view -Sb -F4 - | samtools sort - -o $name.mapped.sorted.bam
+              samtools view -Sb -F4 - | samtools sort - -o $name.mapped.sorted.bam 2>/dev/null
     samtools index $name.mapped.sorted.bam
     rm $name.{bwt,pac,ann,amb,sa}
 
@@ -488,7 +491,7 @@ antibiotics(){
 docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi
 memory=`awk '{ printf "%.2f", $2/1024/1024 ; exit}' /proc/meminfo | cut -d\. -f1`
 run_name=$(basename `pwd` | cut -d\_ -f1)
-
+: <<'END'
 echo "Clean"
 clean
 echo "Small samples"
@@ -514,7 +517,7 @@ if [ -s "salm_id.txt" ]; then
   assembly_stats_cov
   cd ..
 fi
-
+END
 echo "SALM-LIKE"
 
 if [ -s "salm-like.txt" ]; then
