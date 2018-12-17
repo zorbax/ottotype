@@ -345,7 +345,7 @@ assembly_stats_cov() {
     echo -e "Assembly:\t$name" | tee $name.stats
     bwa index -a bwtsw $i -p $name 2> /dev/null
     bwa mem -t $(nproc) $name $reads\_R1.trim.fastq.gz $reads\_R2.trim.fastq.gz 2> /dev/null |\
-              samtools view -Sb -F4 - | samtools sort - -o $name.mapped.sorted
+              samtools view -Sb -F4 - | samtools sort - -o $name.mapped.sorted.bam
     samtools index $name.mapped.sorted.bam
     rm $name.{bwt,pac,ann,amb,sa}
 
