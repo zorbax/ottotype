@@ -295,7 +295,7 @@ trimming() {
 
 assembly() {
 
-  for i in $(ls *trim.fastq.gz | grep -v U | cut -d\_ -f1,2 | sort | uniq)
+  for i in $(ls *trim.fastq.gz | grep -v "1U\|2U" | cut -d\_ -f1,2 | sort | uniq)
   do
     mkdir -p $PWD/ASSEMBLY
     echo "$i"
@@ -505,15 +505,20 @@ if [ -s "salm_id.txt" ]; then
 
   while read -r fastq
   do
-    find . -type f -name "$fastq*fastq.gz" -exec mv -f {} SALMONELLA \; 2>/dev/null
+    find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/SALMONELLA/*" -print0 | \
+           xargs -0 mv -t "$PWD/SALMONELLA"
   done < <(cat salm_id.txt | cut -f1)
 
   cd SALMONELLA
 
   file="../salm_id.txt"
+  echo "run_salmonella"
   run_salmonella
+  echo "Trimming"
   trimming
+  echo "Assembly"
   assembly
+  echo "Assembly stats"
   assembly_stats_cov
   cd ..
 fi
@@ -525,7 +530,8 @@ if [ -s "salm-like.txt" ]; then
 
   while read -r fastq
   do
-    find . -name "$fastq*fastq.gz" -exec mv -f {} SALM-LIKE \; 2>/dev/null
+    find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/SALM-LIKE/*" -print0 | \
+           xargs -0 mv -t "$PWD/SALM-LIKE"
   done < <(cat salm-like.txt | cut -f1)
 
   cd SALM-LIKE
@@ -554,7 +560,8 @@ if [ -s "nosalm_id_ncbi.txt" ]; then
 
   while read -r fastq
   do
-    find . -name "$fastq*fastq.gz" -exec mv -f {} OTHERS \;
+    find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/OTHERS/*" -print0 | \
+           xargs -0 mv -t "$PWD/OTHERS"
   done < <(cat nosalm_id_ncbi.txt | cut -f1)
 
   cd OTHERS
