@@ -106,8 +106,7 @@ clean() {
         echo "Top hit: $acc"
         hit=$(gzip -c -d -f $HOME/bin/16S/NCBI.gz | grep -m 1 -F $acc)
         echo "Description: $hit"
-        binomial=$(echo $hit | cut -d ' ' -f 2,3)
-        echo "Species: $binomial"
+        echo "Species: $(echo $hit | cut -d ' ' -f2,3)"
       fi
     done > screen_tax_raw_ncbi.txt
 
@@ -321,23 +320,24 @@ clean() {
       fi
 
       if [ $? != 0 ]; then
-         cp $i/contig.fa $i-assembly.fa
+         cp $i/contig.fa $i-idba-assembly.fa
       else
-         cp $i/scaffold.fa $i-assembly.fa
+         cp $i/scaffold.fa $i-idba-assembly.fa
       fi
 
       rm -rf *pp.{fq,bwt,sai,rbwt} *out *err *rsai *ec.{fq,fa} $i
 
-      cat $i-assembly.fa | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
+      cat $i-idba-assembly.fa | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
            awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' > tmp && \
-           mv tmp $PWD/ASSEMBLY/$i-assembly.fa
-      rm $i-assembly.fa
+           mv tmp $PWD/ASSEMBLY/$i-idba-assembly.fa
+      rm $i-idba-assembly.fa
     done
   }
 
   assembly_stats_cov() {
 
     run_name=$(basename `pwd` | cut -d\_ -f1)
+    mkdir -p OUTPUT
     echo -e "Assembly\tNumber_of_contigs\tCoverage\tAssembly_size\tLargest_contig\tN50\tN90" > assembly_$run_name.stats
 
     for i in $PWD/ASSEMBLY/*assembly.fa
@@ -373,15 +373,15 @@ clean() {
       large_contig=$(head -1 $name\_contig_lengths.stat)
 
       rm *stat
-      echo -e "Number of contigs:\t$contigs_number" | tee -a $name.stats
-      echo "$cov" | tee -a $name.stats
-      echo -e "Assembly size:\t$assembly_size" | tee -a $name.stats
-      echo -e "Largest contig:\t$large_contig" | tee -a $name.stats
-      echo -e "N50:\t$N50" | tee -a $name.stats
-      echo -e "N90:\t$N90" | tee -a $name.stats
-      echo -e "$name\t$contigs_number\t$cover\t$assembly_size\t$large_contig\t$N50\t$N90" | tee -a assembly_$run_name.stats
+      echo -e "Number of contigs:\t$contigs_number\n$cov" >> $name.stats
+      echo -e "Assembly size:\t$assembly_size" >> $name.stats
+      echo -e "Largest contig:\t$large_contig" >> $name.stats
+      echo -e "N50:\t$N50\nN90:\t$N90" >> $name.stats
+      mv $name.stats $PWD/ASSEMBLY
+      echo -e "$name\t$contigs_number\t$cover\t$assembly_size\t$large_contig\t$N50\t$N90" >> assembly_$run_name.stats
       find . -maxdepth 1 -type f \( -name "*.bam" -o -name "*.bai" \) -exec rm {} \;
     done
+    mv assembly_$run_name.stats $PWD/OUTPUT
   }
 
   assembly_spades() {
