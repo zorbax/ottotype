@@ -51,7 +51,7 @@ clean() {
 
   small_samples() {
 
-    mkdir $PWD/SMALL_SAMPLES
+    mkdir $PWD/small_samples
 
     for i in *fastq.gz
     do
@@ -60,23 +60,23 @@ clean() {
           small_links=`ls -l $i | awk '{ print $NF }'`
           ls -lh $small_links | awk '{ print $NF": " $5}' | \
           sed 's/_L001//; s/_001// ; s/.*\///; s/_R[12].fastq.gz//' \
-          >> $PWD/SMALL_SAMPLES/small_samples_size.txt
+          >> $PWD/small_samples/small_samples_size.txt
         fi
       else
         find . -maxdepth 1 -size -4M -name "*fastq.gz" -exec ls -lh {} \; | \
              awk '{ print $NF": " $5}' | cut -d\/ -f2 | \
-             sed 's/_R[12].fastq.gz//' >> $PWD/SMALL_SAMPLES/small_samples_size.txt
+             sed 's/_R[12].fastq.gz//' >> $PWD/small_samples/small_samples_size.txt
       fi
     done
 
-    x=`ls -l $PWD/SMALL_SAMPLES/small_samples_size.txt | awk '{ print $5 }'`
+    x=`ls -l $PWD/small_samples/small_samples_size.txt | awk '{ print $5 }'`
     if [ $x == 0 ]; then
-      rm -rf $PWD/SMALL_SAMPLES
+      rm -rf $PWD/small_samples
       echo "Not found small samples in dataset. Great!" #This to log
     else
-      small="$PWD/SMALL_SAMPLES/small_samples_size.txt"
+      small="$PWD/small_samples/small_samples_size.txt"
       id_samples=`cat $small | awk '{ print $1 }' | cut -d\_ -f1,2 | cut -d\: -f1 | sort | uniq`
-      echo $id_samples | cut -d\: -f1 > $PWD/SMALL_SAMPLES/small_samples_ids.txt
+      echo $id_samples | cut -d\: -f1 > $PWD/small_samples/small_samples_ids.txt
       n_samples=`cat $id_samples | wc -l`
       echo -e "
           The next $n_samples samples are too small and
@@ -85,7 +85,7 @@ clean() {
 
       for i in $id_samples
       do
-        mv $i\_R*.fastq.gz $PWD/SMALL_SAMPLES
+        mv $i\_R*.fastq.gz $PWD/small_samples
       done
     fi
   }
@@ -134,7 +134,7 @@ clean() {
     run_name=$(basename `pwd` | cut -d\_ -f1)
 
     docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
-    mkdir -p SEQSERO_$run_name $PWD/OUTPUT
+    mkdir -p seqsero_$run_name $PWD/OUTPUT
 
     if [ -z $file ]; then
       file="salm_id.txt"
@@ -145,16 +145,16 @@ clean() {
         R1=`ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R1/) { print $1 }'`
         R2=`ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R2/) { print $1 }'`
         docker run --rm -it -v $(pwd):/data -w /data seqsero SeqSero.py -m 2 -i $R1 $R2 &> /dev/null && \
-        mv SeqSero_result* SEQSERO_$run_name
+        mv SeqSero_result* seqsero_$run_name
       else
         docker run --rm -it -v $(pwd):/data -w /data seqsero SeqSero.py -m 2 \
-               -i $i\_R1.fastq.gz $i\_R2.fastq.gz &> /dev/null && mv SeqSero_result* SEQSERO_$run_name
+               -i $i\_R1.fastq.gz $i\_R2.fastq.gz &> /dev/null && mv SeqSero_result* seqsero_$run_name
       fi
     done
 
-    find SEQSERO_$run_name -type f -name '*_result.txt' -exec cat {} \
-                   > SEQSERO_$run_name/SeqSero\_$run_name\_serotype.txt \;
-    cp SEQSERO_$run_name/SeqSero\_$run_name\_serotype.txt $PWD/OUTPUT
+    find seqsero_$run_name -type f -name '*_result.txt' -exec cat {} \
+                   > seqsero_$run_name/SeqSero\_$run_name\_serotype.txt \;
+    cp seqsero_$run_name/SeqSero\_$run_name\_serotype.txt $PWD/OUTPUT
 
     echo "SeqSero: DONE"
     mkdir -p $PWD/RESULTS
@@ -173,7 +173,7 @@ clean() {
 
     docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
 
-    mkdir -p SRST2_$run_name
+    mkdir -p srst2\_$run_name
 
     docker run --rm -it -v $(pwd):/data -w /data srst2 getmlst.py --species "Salmonella" &> /dev/null
 
@@ -188,16 +188,16 @@ clean() {
            --mlst_definitions senterica.txt --mlst_delimiter '_' --gene_db ARGannot.fasta \
            --threads $(nproc) &> /dev/null
 
-    find . -maxdepth 1 -name "SRST2_*" -type f -exec mv {} SRST2_$run_name \;
-    cp SRST2_$run_name/SRST2__compiledResults.txt $PWD/OUTPUT/SRST2_$run_name\_compiledResults.txt
+    find . -maxdepth 1 -name "SRST2_*" -type f -exec mv {} srst2\_$run_name \;
+    cp srst2\_$run_name/SRST2__compiledResults.txt $PWD/OUTPUT/srst2\_$run_name\_compiledResults.txt
 
     rm -f senterica.txt *tfa Salmonella* mlst* ARG* *bt2 *fai SRST2.log
 
-    cat $PWD/OUTPUT/SRST2_$run_name\_compiledResults.txt | tail -n+2 | cut -d$'\t' -f 1-9 | \
+    cat $PWD/OUTPUT/srst2\_$run_name\_compiledResults.txt | tail -n+2 | cut -d$'\t' -f 1-9 | \
         sed 's/[?*]//g; /^$/d' | perl -pe 's/_S[0-9]{1,}_//g' | sort \
         > $PWD/RESULTS/srst2_$run_name\_achtman.tsv
 
-    cat $PWD/OUTPUT/SRST2_$run_name\_compiledResults.txt | tail -n+2 | \
+    cat $PWD/OUTPUT/srst2\_$run_name\_compiledResults.txt | tail -n+2 | \
         awk -v OFS='\t' -v f=2 -v t=13 '{
           for( i=1;i<=NF;i++ )
           if( i>=f&&i<=t )
@@ -235,7 +235,7 @@ clean() {
     echo "SRST2: DONE"
 
     docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
-    mkdir ARIBA_$run_name
+    mkdir ariba_$run_name
 
     docker run --rm -it -v $(pwd):/data ariba ariba pubmlstget "Salmonella enterica" Salmonella &> /dev/null && \
     docker run --rm -it -v $(pwd):/data ariba ariba getref card card &> /dev/null && \
@@ -245,16 +245,16 @@ clean() {
     do
       docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/Salmonella/ref_db \
                                 $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_ariba &> /dev/null && \
-      mv $i\_ariba ARIBA\_$run_name
+      mv $i\_ariba ariba\_$run_name
 
       docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/card.prepareref \
                                $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_card &> /dev/null && \
-      mv $i\_card ARIBA\_$run_name
+      mv $i\_card ariba\_$run_name
     done
 
     rm -rf Salmonella card.*
 
-    cd ARIBA_$run_name
+    cd ariba_$run_name
 
     for i in *ariba
     do
@@ -273,7 +273,7 @@ clean() {
     docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
 
     cd ..
-    echo "ARIBA: DONE"
+    echo "ariba: DONE"
   }
 
   trimming() {
@@ -417,41 +417,41 @@ clean() {
   kmer_finder(){
 
     run_name=$(basename `pwd` | cut -d\_ -f1)
-    mkdir $run_name\_kmer
+    mkdir kmerfinder\_$run_name
 
     DB="/mnt/disk1/bin/kmerfinder_DB/bacteria.organisms.ATGAC"
 
     for i in $PWD/ASSEMBLY/*assembly.fa
     do
       genome_name=`basename $i | cut -d\- -f1`
-      findTemplate -i $i -t $DB -x ATGAC -w -o $run_name\_kmer/$genome_name.kmer
+      findTemplate -i $i -t $DB -x ATGAC -w -o kmerfinder\_$run_name/$genome_name.kmer
     done
   }
 
   kraken_tax(){
 
     run_name=$(basename `pwd` | cut -d\_ -f1)
-    mkdir -p $run_name\_kraken2 OUTPUT RESULTS
+    mkdir -p kraken2\_$run_name OUTPUT RESULTS
 
     for i in $(ls *fastq.gz | grep -v trim | cut -d\_ -f1,2 | sort | uniq)
     do
       kraken2 --paired --gzip-compressed --threads $(nproc) \
-        --db $YGGDRASIL --report $run_name\_kraken2/$i.kraken2-report.tsv \
-        $i\_R1.fastq.gz $i\_R2.fastq.gz > /dev/null 2> $run_name\_kraken2/$i.kraken2.log
+        --db $YGGDRASIL --report kraken2\_$run_name/$i.kraken2-report.tsv \
+        $i\_R1.fastq.gz $i\_R2.fastq.gz > /dev/null 2> kraken2\_$run_name/$i.kraken2.log
 
       # sponge > sudo apt-get install moreutils
-      tax=`cat $run_name\_kraken2/$i.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
+      tax=`cat kraken2\_$run_name/$i.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
            grep -P '\t[DPCOFGS]\t' | sed 's/D/K/' | awk -F'\t' '$4=tolower($4){ print $4"_", $6}' | \
            sed -E 's/[ ]{1,}/_/g' | tr  "\n" ";" | sed 's/;$/\n/'`
-      echo -e "$i\t$tax" > $run_name\_kraken2/$i.tax.tsv
-      cat $run_name\_kraken2/$i.kraken2.log | tail -2 | paste - - | sed "s/^  /$i\t/" | sponge $run_name\_kraken2/$i.kraken2.log
+      echo -e "$i\t$tax" > kraken2\_$run_name/$i.tax.tsv
+      cat kraken2\_$run_name/$i.kraken2.log | tail -2 | paste - - | sed "s/^  /$i\t/" | sponge kraken2\_$run_name/$i.kraken2.log
     done
 
-    cat $run_name\_kraken2/*tax.tsv | awk 'BEGIN { FS="\t"; OFS="\t" } { $2=$2 "\t" $2 } 1'| \
+    cat kraken2\_$run_name/*tax.tsv | awk 'BEGIN { FS="\t"; OFS="\t" } { $2=$2 "\t" $2 } 1'| \
         sed -e 's/k__/#/; s/s__/#/; s/\(#\).*\(#\)//' | sed -E 's/_S[0-9]{1,}//' | \
         awk -F'\t' -v OFS='\t' '{gsub(";s_"," |",$2);gsub("_"," ",$2)}1' | \
-        perl -pe 'if(/\#/){s/\ /\_/g}' > OUTPUT/$run_name\_kraken.tax.tsv
-    cp OUTPUT/$run_name\_kraken.tax.tsv RESULTS/$run_name\_kraken.tax.tsv
+        perl -pe 'if(/\#/){s/\ /\_/g}' > OUTPUT/kraken\_$run_name.tax.tsv
+    cp OUTPUT/kraken\_$run_name.tax.tsv RESULTS/kraken\_$run_name.tax.tsv
   }
 
   antibiotics(){
@@ -462,8 +462,8 @@ clean() {
     wget -q -nc https://raw.githubusercontent.com/CNRDOGM/bin/master/srst2/data/ARGannot.fasta
     docker run --rm -it -v $(pwd):/data -w /data srst2 srst2 --log --output /data/SRST2 --input_pe *fastq.gz \
                           --forward R1 --reverse R2 --gene_db ARGannot.fasta --threads $(nproc) &> /dev/null
-    cat SRST2__genes__ARGannot__results.txt | sed 's/[?*]//g' | sed -E 's/_S[0-9]{1,}_//' | \
-            perl -pe "s/\t\-/#/g; s/\#{1,}//g; s/\_[0-9]{1,}//g; s/\'\'/\-/g"  > $PWD/OUTPUT/srst2_$run_name\_argannot.tsv
+    cat SRST2__genes__ARGannot__results.txt | tail -n +2 | sed 's/[?*]//g' | sed -E 's/_S[0-9]{1,}_//' | \
+            perl -pe "s/\t\-/#/g; s/\#{1,}//g; s/\_[0-9]{1,}//g; s/\'\'/\-/g" | sort > $PWD/OUTPUT/srst2_$run_name\_argannot.tsv
     mv SRST2__genes__ARGannot__results.txt $PWD/OUTPUT
 
     translate.py $PWD/OUTPUT/srst2_$run_name\_argannot.tsv $PWD/RESULTS/antibiotics_$run_name.tsv
@@ -472,12 +472,12 @@ clean() {
     docker run --rm -it -v $(pwd):/data ariba ariba getref card card &> /dev/null && \
     docker run --rm -it -v $(pwd):/data ariba ariba prepareref -f card.fa -m card.tsv card.prepareref &> /dev/null
 
-    mkdir -p ARIBA\_$run_name
+    mkdir -p ariba\_$run_name
     for i in $(ls *gz | grep -v trim | cut -d\_ -f1,2 | sort | uniq)
     do
       docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/card.prepareref \
                                $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_card &> /dev/null && \
-      mv $i\_card ARIBA\_$run_name
+      mv $i\_card ariba\_$run_name
     done
 
     rm -rf card.* *ARGannot*{bam,pileup,bt2,fasta,fai}
@@ -586,6 +586,12 @@ if [ -s "nosalm_id_ncbi.txt" ]; then
   cd ..
 fi
 
-#mkdir RESULTS_$run_name
+path_results=`find . -type d -name RESULTS`
+mkdir RESULTS\_$run_name
 
-#find . -name "RESULTS" -type d -not -path "$PWD/RESULTS_$run_name/*" -exec cp {}
+for i in $path_results
+do
+  cp $i/* RESULTS\_$run_name
+done
+
+echo "DONE"
