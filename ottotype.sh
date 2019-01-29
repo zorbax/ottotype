@@ -268,6 +268,8 @@ clean() {
       fi
     done > ../OUTPUT/ariba_$run_name\_achtman.tsv
 
+    cp ../OUTPUT/ariba_$run_name\_achtman.tsv ../RESULTS/ariba_$run_name\_achtman.tsv
+
     docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
 
     cd ..
@@ -583,3 +585,7 @@ if [ -s "nosalm_id_ncbi.txt" ]; then
   antibiotics
   cd ..
 fi
+
+#mkdir RESULTS_$run_name
+
+#find . -name "RESULTS" -type d -not -path "$PWD/RESULTS_$run_name/*" -exec cp {}
