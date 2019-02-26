@@ -38,30 +38,41 @@ def main():
 
     code = {}
     with open(str(argannot), 'r', encoding='utf-8') as code_table:
-        for i in csv.reader(code_table, delimiter='\t'):
-            code[i[1]] = i[0]
+        for gene in csv.reader(code_table, delimiter='\t'):
+            code[gene[1]] = gene[0]
     # print(code)
-
-    rsrt_results = {}
-    with open(sys.argv[1], 'r') as argannotable:
-        for k in csv.reader(argannotable, delimiter='\t'):
-            rsrt_results[k[0]] = k[1:]
 
     '''
     for gene in sorted(code):
        print(gene,':',code[gene])
+    '''
 
-    for genes in sorted(rsrt_results):
-        print(genes,':',rsrt_results[genes])
+    srst_results = {}
+    with open(sys.argv[1], 'r') as argannotable:
+        for k in csv.reader(argannotable, delimiter='\t'):
+            srst_results[k[0]] = k[1:]
+    # print(srst_results)
+
+    '''
+    for id in sorted(srst_results):
+        if srst_results[id]:
+            print(id,':',srst_results[id])
+        else:
+            print(id)
     '''
 
     result = []
-    for ids in sorted(rsrt_results):
+    for id in sorted(srst_results):
         assignid = {}
-        for genes in rsrt_results[ids]:
-            for gene_id in sorted(code):
-                if genes == gene_id:
-                    assignid[ids] = code[gene_id]
+        if srst_results[id]:
+            for gene in srst_results[id]:
+                for gene_id in sorted(code):
+                    if gene == gene_id:
+                        assignid[id] = code[gene_id]
+                # print(assignid)
+                result.append(assignid.copy())
+        else:
+            assignid[id] = "NP"
             # print(assignid)
             result.append(assignid.copy())
 

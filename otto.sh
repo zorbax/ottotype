@@ -1,19 +1,8 @@
 #!/bin/bash
 
-: <<'END'
-source functions/utils.sh
-source functions/trimming.sh
-source functions/assembly_idba.sh
-source functions/salmonella_typing.sh
-source functions/antibiotics.sh
-source functions/assembly_mlst.sh
-source functions/assembly_stats.sh
-source functions/small_samples.sh
-source functions/kmer_finder.sh
-source functions/screen_raw_tax.sh
-source functions/screen_assembly_tax.sh
-source functions/assembly_spades.sh
-END
+echo "===================================="
+echo "Serotyping pipeline from SSB-CNRDOGM"
+echo "===================================="
 
 ####   _____                 _   _
 ####  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___
@@ -22,142 +11,13 @@ END
 ####  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
 ####
 
-T=$(date +%s)
-
-tm() {
-
-  local T=$(date +%s)
-  local command="$@"
-  $@
-  rc=$?
-  local R=$[$(date +%s)-$T]
-  local D=$((R/60/60/24))
-  local H=$((R/60/60%24))
-  local M=$((R/60%60))
-  local S=$((R%60))
-
-  printf 'CMD-> %s\n' "$command"
-  printf 'RUNTIME-> '
-  (( $D > 0 )) && printf '%d d ' $D
-  (( $H > 0 )) && printf '%d h ' $H
-  (( $M > 0 )) && printf '%d m ' $M
-  (( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
-  printf '%d s\n' $S
-  return $rc
-}
-
-error(){
-  local parent_lineno="$1"
-  local script="$2"
-  local message="$3"
-  local code="${4:-1}"
-
-  if [[ -n "$message" ]] ; then
-    echo -e "\n---------------------------------------\n"
-    echo -e "ERROR in $script on or near line ${parent_lineno}; exiting with status ${code}"
-    echo -e "MESSAGE:\n"
-    echo -e "$message"
-    echo -e "\n---------------------------------------\n"
-  else
-    echo -e "\n---------------------------------------\n"
-    echo -e "ERROR in $script on or near line ${parent_lineno}; exiting with status ${code}"
-    echo -e "\n---------------------------------------\n"
-  fi
-
-  exit "${code}"
-}
-
-mkdir $PWD/log
-log_file=log/ottotype.log
-if [ -f $log_file ];then
-  rm -f $log_file
-fi
-
-cat << EOF > $log_file
-====================================
-Serotyping pipeline from SSB-CNRDOGM
-====================================
-EOF
-
-echo -e "\nLOG FILE OTTOTYPE" >> $log_file
-echo $(date +"%Y-%m-%d %H:%M") >> $log_file
-
 clean() {
   find -maxdepth 1 -name "*fastq.gz" -type f -or -type l | rename 's/_L001//; s/_001//';
-  echo -e "\n\n# The filenames were renamed with the ${FUNCNAME[0]} function" &>> $log_file
 }
-
-check_dependencies(){
-  counter=0
-  printf '\n%s\t%20s\n' "DEPENDENCY" "STATUS"
-  printf '%s\t%20s\n'   "----------" "------"
-
-  for command in "$@"
-  do
-    length_command=$(echo $command | wc -m)
-    distance_table=$((30 - $length_command))
-    distance_expression=$(echo "%${distance_table}s")
-    printf '%s' $command
-    if ! [ -x "$(which $command 2> /dev/null)" ]; then
-      printf $distance_expression
-      printf "NOT INSTALLED\n"
-      let counter++
-    else
-      printf $distance_expression
-      printf "INSTALLED\n"
-    fi
-  done
-
-  if [ $counter -gt 0 ]; then
-    printf "ERROR: $counter missing dependencies, aborting execution\n" &>> $log_file
-    exit 1
-  fi
-}
-
-check_dockers(){
-  counter=0
-  printf '\n%s\t%20s\n' "DOCKER" "STATUS"
-  printf '%s\t%20s\n' "----------" "------"
-
-  for docker in "$@"
-  do
-    length_docker=$(echo $docker | wc -m)
-    distance_table=$((30 - $length_docker))
-    distance_expression=$(echo "%${distance_table}s")
-    printf '%s' $docker
-
-    if [[ "$(docker images -q $docker 2> /dev/null)" == "" ]]; then
-      printf $distance_expression
-      printf "NOT INSTALLED\n"
-      let counter++
-    else
-      printf $distance_expression
-      printf "INSTALLED\n"
-    fi
-  done
-
-  echo $counter
-  if [ $counter -gt 0 ]; then
-    printf "ERROR: $counter missing dockers, aborting execution\n" &>> $log_file
-    exit 1
-  fi
-}
-
-##check_databases(){ ## BUILD
-  DB="/mnt/disk1/bin/kmerfinder_DB/bacteria.organisms.ATGAC"
-
-### DEBUG ### TEST ERROR
-clean
-check_dependencies salmonella.py bowtie2 bwa minimap2 sponge &>> $log_file # || error ${LINENO} $(basename $0)
-check_dockers plasmidid srst2 ariba &>> $log_file  # || error ${LINENO} $(basename $0)
-check_databases #Build
-
-#############
-# >>> Start script
 
 small_samples() {
 
-  mkdir $PWD/small_samples
+  mkdir $PWD/SMALL_SAMPLES
 
   for i in *fastq.gz
   do
@@ -166,40 +26,37 @@ small_samples() {
         small_links=`ls -l $i | awk '{ print $NF }'`
         ls -lh $small_links | awk '{ print $NF": " $5}' | \
         sed 's/_L001//; s/_001// ; s/.*\///; s/_R[12].fastq.gz//' \
-        >> $PWD/small_samples/small_samples_size.txt
+        >> $PWD/SMALL_SAMPLES/small_samples_size.txt
       fi
     else
       find . -maxdepth 1 -size -4M -name "*fastq.gz" -exec ls -lh {} \; | \
            awk '{ print $NF": " $5}' | cut -d\/ -f2 | \
-           sed 's/_R[12].fastq.gz//' >> $PWD/small_samples/small_samples_size.txt
+           sed 's/_R[12].fastq.gz//' >> $PWD/SMALL_SAMPLES/small_samples_size.txt
     fi
   done
 
-  x=`ls -l $PWD/small_samples/small_samples_size.txt | awk '{ print $5 }'`
+  x=`ls -l $PWD/SMALL_SAMPLES/small_samples_size.txt | awk '{ print $5 }'`
   if [ $x == 0 ]; then
-    rm -rf $PWD/small_samples
-    echo "# Not found small samples in dataset." #&>> $log_file || error ${LINENO} $(basename $0)
+    rm -rf $PWD/SMALL_SAMPLES
+    echo "Not found small samples in dataset. Great!" #This to log
   else
-    small="$PWD/small_samples/small_samples_size.txt"
+    small="$PWD/SMALL_SAMPLES/small_samples_size.txt"
     id_samples=`cat $small | awk '{ print $1 }' | cut -d\_ -f1,2 | cut -d\: -f1 | sort | uniq`
-    echo $id_samples | cut -d\: -f1 > $PWD/small_samples/small_samples_ids.txt
+    echo $id_samples | cut -d\: -f1 > $PWD/SMALL_SAMPLES/small_samples_ids.txt
     n_samples=`cat $id_samples | wc -l`
-    echo -e "\n# This $n_samples are too small:\n# $(echo $id_samples)" #&>> $log_file || error ${LINENO} $(basename $0)
+    echo -e "
+        The next $n_samples samples are too small and
+        will be excluded from the further analysis:
+        $(echo $id_samples)"
 
     for i in $id_samples
     do
-      echo "${i}\t$(zcat ${i}*R1.fastq.gz | awk 'NR%4==1' | wc -l )"
-    done #&>> $log_file || error ${LINENO} $(basename $0)
-
-    for i in $id_samples
-    do
-      mv $i\_R*.fastq.gz $PWD/small_samples # &>> $log_file || error ${LINENO} $(basename $0)
+      mv $i\_R*.fastq.gz $PWD/SMALL_SAMPLES
     done
   fi
 }
 
-screen_tax() { #DONE
-  #check_dependencies salmonella.py minimap2
+screen_tax() {
   salmonella.py -d . -e _R1.fastq.gz | grep -v file | sed 's/_R[12].fastq.gz//' | \
       awk -F'\t' -v OFS='\t' '{if($6 == "100") { print $1, $6 > "salm_id.txt"} else { print $1, $6 > "nosalm_id.txt"}}'
 
@@ -215,26 +72,26 @@ screen_tax() { #DONE
       echo "Top hit: $acc"
       hit=$(gzip -c -d -f $HOME/bin/16S/NCBI.gz | grep -m 1 -F $acc)
       echo "Description: $hit"
-      echo "Species: $(echo $hit | cut -d ' ' -f2,3)"
+      binomial=$(echo $hit | cut -d ' ' -f 2,3)
+      echo "Species: $binomial"
     fi
   done > screen_tax_raw_ncbi.txt
 
   cat screen_tax_raw_ncbi.txt | grep "Reads\|Species" | sed 's/ /#/' | cut -d\# -f2 | \
       grep -B1 Salmonella | sed 's/--//; /^$/d' | paste - - | sort -k1 > salm_id_ncbi.txt 2>/dev/null
   cat screen_tax_raw_ncbi.txt | grep "Reads\|Species" | sed 's/ /#/' | cut -d\# -f2 | \
-      sed 's/--//; /^$/d' | paste - - | grep -v Salmonella | sed '/^$/d' | \
-      sort -k1 > nosalm_id_ncbi.txt 2>/dev/null
+      sed 's/--//; /^$/d' | paste - - | grep -v Salmonella | sed '/^$/d' | sort -k1 > nosalm_id_ncbi.txt 2>/dev/null
 
-  if [[ -s "salm_id.txt" && -s "salm_id_ncbi.txt" ]]; then
-    grep -vwif <(sort -k1 salm_id.txt | cut -f1) <(cut -f1 salm_id_ncbi.txt) \
-    > salm-like.txt 2>/dev/null
+if [[ -s "salm_id.txt" && -s "salm_id_ncbi.txt" ]]; then
+  grep -vwif <(sort -k1 salm_id.txt | cut -f1) <(cut -f1 salm_id_ncbi.txt) \
+  > salm-like.txt 2>/dev/null
+else
+  if [ -s "salm_id.txt" ]; then
+    echo $(sort -k1 salm_id.txt | cut -f1) | tr ' ' '\n' > salm-like.txt 2>/dev/null
   else
-    if [ -s "salm_id.txt" ]; then
-      echo $(sort -k1 salm_id.txt | cut -f1) | tr ' ' '\n' > salm-like.txt 2>/dev/null
-    else
-      echo $(cut -f1 salm_id_ncbi.txt) | tr ' ' '\n' > salm-like.txt 2>/dev/null
-    fi
+    echo $(cut -f1 salm_id_ncbi.txt) | tr ' ' '\n' > salm-like.txt 2>/dev/null
   fi
+fi
 
   for i in *txt
   do
@@ -245,12 +102,10 @@ screen_tax() { #DONE
 }
 
 run_salmonella() {
-  #echo -e "\n#Executing" ${FUNCNAME[0]} "\n"
-
   run_name=$(basename `pwd` | cut -d\_ -f1)
 
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
-  mkdir -p seqsero_$run_name $PWD/OUTPUT
+  mkdir -p SEQSERO_$run_name $PWD/OUTPUT
 
   if [ -z $file ]; then
     file="salm_id.txt"
@@ -261,16 +116,16 @@ run_salmonella() {
       R1=`ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R1/) { print $1 }'`
       R2=`ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R2/) { print $1 }'`
       docker run --rm -it -v $(pwd):/data -w /data seqsero SeqSero.py -m 2 -i $R1 $R2 &> /dev/null && \
-      mv SeqSero_result* seqsero_$run_name
+      mv SeqSero_result* SEQSERO_$run_name
     else
       docker run --rm -it -v $(pwd):/data -w /data seqsero SeqSero.py -m 2 \
-             -i $i\_R1.fastq.gz $i\_R2.fastq.gz &> /dev/null && mv SeqSero_result* seqsero_$run_name
+             -i $i\_R1.fastq.gz $i\_R2.fastq.gz &> /dev/null && mv SeqSero_result* SEQSERO_$run_name
     fi
   done
 
-  find seqsero_$run_name -type f -name '*_result.txt' -exec cat {} \
-                 > seqsero_$run_name/SeqSero\_$run_name\_serotype.txt \;
-  cp seqsero_$run_name/SeqSero\_$run_name\_serotype.txt $PWD/OUTPUT
+  find SEQSERO_$run_name -type f -name '*_result.txt' -exec cat {} \
+                 > SEQSERO_$run_name/SeqSero\_$run_name\_serotype.txt \;
+  cp SEQSERO_$run_name/SeqSero\_$run_name\_serotype.txt $PWD/OUTPUT
 
   echo "SeqSero: DONE"
   mkdir -p $PWD/RESULTS
@@ -280,7 +135,7 @@ run_salmonella() {
        cut -d\( -f1 | sort | sed 's/ /\tSalmonella enterica subsp. enterica serovar /; s/*//' \
        > $PWD/RESULTS/seqsero_$run_name\_serotype.tsv
 
-  cat  $PWD/OUTPUT/SeqSero\_$run_name\_serotype.txt | grep "Input\|antigen\|serotype" | grep -v -w are | \
+   cat  $PWD/OUTPUT/SeqSero\_$run_name\_serotype.txt | grep "Input\|antigen\|serotype" | grep -v -w are | \
        sed 's/ prediction//; s/O antigen/Antígeno/; s/Predicted antigenic profile/Perfil antigénico/;
        s/Predicted serotype/Serotipo/; s/(s)//; s/Input files:\t//; s/)//; s/\t/ /; /^$/d; s/*//;
        s/H[12] antigen(//; s/(O5-//; s/N\/A/N\/A\&/; s/.fastq/@/; s/ potential monophasic variant of //' | \
@@ -289,7 +144,7 @@ run_salmonella() {
 
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
 
-  mkdir -p srst2\_$run_name
+  mkdir -p SRST2_$run_name
 
   docker run --rm -it -v $(pwd):/data -w /data srst2 getmlst.py --species "Salmonella" &> /dev/null
 
@@ -304,16 +159,16 @@ run_salmonella() {
          --mlst_definitions senterica.txt --mlst_delimiter '_' --gene_db ARGannot.fasta \
          --threads $(nproc) &> /dev/null
 
-  find . -maxdepth 1 -name "SRST2_*" -type f -exec mv {} srst2\_$run_name \;
-  cp srst2\_$run_name/SRST2__compiledResults.txt $PWD/OUTPUT/srst2\_$run_name\_compiledResults.txt
+  find . -maxdepth 1 -name "SRST2_*" -type f -exec mv {} SRST2_$run_name \;
+  cp SRST2_$run_name/SRST2__compiledResults.txt $PWD/OUTPUT/SRST2_$run_name\_compiledResults.txt
 
   rm -f senterica.txt *tfa Salmonella* mlst* ARG* *bt2 *fai SRST2.log
 
-  cat $PWD/OUTPUT/srst2\_$run_name\_compiledResults.txt | tail -n+2 | cut -d$'\t' -f 1-9 | \
+  cat $PWD/OUTPUT/SRST2_$run_name\_compiledResults.txt | tail -n+2 | cut -d$'\t' -f 1-9 | \
       sed 's/[?*]//g; /^$/d' | perl -pe 's/_S[0-9]{1,}_//g' | sort \
       > $PWD/RESULTS/srst2_$run_name\_achtman.tsv
 
-  cat $PWD/OUTPUT/srst2\_$run_name\_compiledResults.txt | tail -n+2 | \
+  cat $PWD/OUTPUT/SRST2_$run_name\_compiledResults.txt | tail -n+2 | \
       awk -v OFS='\t' -v f=2 -v t=13 '{
         for( i=1;i<=NF;i++ )
         if( i>=f&&i<=t )
@@ -351,7 +206,7 @@ run_salmonella() {
   echo "SRST2: DONE"
 
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
-  mkdir ariba_$run_name
+  mkdir ARIBA_$run_name
 
   docker run --rm -it -v $(pwd):/data ariba ariba pubmlstget "Salmonella enterica" Salmonella &> /dev/null && \
   docker run --rm -it -v $(pwd):/data ariba ariba getref card card &> /dev/null && \
@@ -361,16 +216,16 @@ run_salmonella() {
   do
     docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/Salmonella/ref_db \
                               $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_ariba &> /dev/null && \
-    mv $i\_ariba ariba\_$run_name
+    mv $i\_ariba ARIBA\_$run_name
 
     docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/card.prepareref \
                              $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_card &> /dev/null && \
-    mv $i\_card ariba\_$run_name
+    mv $i\_card ARIBA\_$run_name
   done
 
   rm -rf Salmonella card.*
 
-  cd ariba_$run_name
+  cd ARIBA_$run_name
 
   for i in *ariba
   do
@@ -384,24 +239,22 @@ run_salmonella() {
     fi
   done > ../OUTPUT/ariba_$run_name\_achtman.tsv
 
-  cp ../OUTPUT/ariba_$run_name\_achtman.tsv ../RESULTS/ariba_$run_name\_achtman.tsv
-
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
 
   cd ..
-  echo "ariba: DONE"
+  echo "ARIBA: DONE"
 }
 
 trimming() {
 
-  mkdir -p $PWD/TRIMMING/1U2U
+  mkdir 1U2U
   for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq )
   do
     trimmomatic PE -phred33 -threads $(nproc) $i\_R1.fastq.gz $i\_R2.fastq.gz \
        $i\_R1.trim.fastq.gz $i.1U.trim.fastq.gz \
        $i\_R2.trim.fastq.gz $i.2U.trim.fastq.gz \
-       SLIDINGWINDOW:4:20 MINLEN:70 &> $i.trim.log
-    mv *U.trim.fastq.gz TRIMMING/1U2U && mv *trim*gz TRIMMING
+       SLIDINGWINDOW:5:20 MINLEN:70 &> $i.trim.log
+    mv *U.trim.fastq.gz 1U2U
 
     if [ $? -eq 0 ]; then
         rm $i.trim.log
@@ -409,15 +262,6 @@ trimming() {
   done
 }
 
-: <<'END'
-qc(){
-  sga preprocess -q 20 -f 20 --pe-mode=1 $i\_R1.fastq.gz $i\_R2.fastq.gz > $i\_12.pp.fq 2> /dev/null
-  sga index -a ropebwt -t $(nproc) --no-reverse $name\_12.pp.fq > $name.index.out 2> $name.index.err
-  sga preqc -t $(nproc) $name\_12.pp.fq > $name\_12.pp.preqc
-  sga-preqc-report.py $name\_12.pp.preqc
-}
-
-END
 assembly() {
 
   for i in $(ls $PWD/TRIMMING/*gz | cut -d\_ -f1,2 | sort | uniq)
@@ -465,6 +309,7 @@ assembly() {
     rm $name-idba-assembly.fa
   done
 }
+
 
 assembly_spades() {
   mkdir -p ASSEMBLY
@@ -624,21 +469,6 @@ antibiotics(){
   rm -rf card.* *ARGannot*{bam,pileup,bt2,fasta,fai}
 }
 
-plasmids(){  ####TEST and integrate with assembly
-  run_name=$(basename `pwd` | cut -d\_ -f1)
-
-  for i in $(ls *gz | grep -v trim | cut -d\_ -f1,2 | sort | uniq)
-  do
-    assembly=$(echo $i | cut -d\_ -f1)
-    docker run --rm -it -v $(pwd):/data -w /data -u $(id -u):$(id -g)\
-        plasmidid plasmidID.sh \
-        -1 $i\_R1.fastq.gz -2 $i\_R2.fastq.gz \
-        -d plasmid.complete.nr100.fna \
-        -c ASSEMBLY/$assembly-spades-assembly.fa \
-        --no-trim -s $i -g plasmids\_$run_name
-   done
-}
-
 ####   __  __       _
 ####  |  \/  | __ _(_)_ __
 ####  | |\/| |/ _` | | '_ \
@@ -664,14 +494,14 @@ if [ -s "salm_id.txt" ]; then
   while read -r fastq
   do
     find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/SALMONELLA/*" -print0 | \
-           xargs -0 mv -t "$PWD/SALMONELLA" 2>/dev/null
+           xargs -0 mv -t "$PWD/SALMONELLA"
   done < <(cat salm_id.txt | cut -f1)
 
   cd SALMONELLA
 
   file="../salm_id.txt"
   echo "run_salmonella"
-  run_salmonella #&>> $log_file || error ${LINENO} $(basename $0)
+  run_salmonella
   echo "Trimming"
   trimming
   echo "Assembly"
@@ -689,7 +519,7 @@ if [ -s "salm-like.txt" ]; then
   while read -r fastq
   do
     find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/SALM-LIKE/*" -print0 | \
-           xargs -0 mv -t "$PWD/SALM-LIKE" 2>/dev/null
+           xargs -0 mv -t "$PWD/SALM-LIKE"
   done < <(cat salm-like.txt | cut -f1)
 
   cd SALM-LIKE
@@ -707,12 +537,10 @@ if [ -s "salm-like.txt" ]; then
   assembly_mlst
   echo "kmerfinder"
   kmer_finder
-  echo "Kraken"
-  kraken_tax
   cd ..
 fi
 
-echo "OTHERS"
+echo "NOSALM"
 
 if [ -s "nosalm_id_ncbi.txt" ]; then
 
@@ -721,7 +549,7 @@ if [ -s "nosalm_id_ncbi.txt" ]; then
   while read -r fastq
   do
     find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/OTHERS/*" -print0 | \
-           xargs -0 mv -t "$PWD/OTHERS" 2>/dev/null
+           xargs -0 mv -t "$PWD/OTHERS"
   done < <(cat nosalm_id_ncbi.txt | cut -f1)
 
   cd OTHERS
@@ -754,17 +582,3 @@ do
 done
 
 echo "DONE"
-
-R=$[$(date +%s)-$T]
-D=$((R/60/60/24))
-H=$((R/60/60%24))
-M=$((R/60%60))
-S=$((R%60))
-
-printf 'CMD-> %s\n' "$0"
-printf 'RUNTIME-> '
-(( $D > 0 )) && printf '%d d ' $D
-(( $H > 0 )) && printf '%d h ' $H
-(( $M > 0 )) && printf '%d m ' $M
-(( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
-printf '%d s\n' $S

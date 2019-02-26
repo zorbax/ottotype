@@ -98,9 +98,9 @@ if [ $use_docker == true ]; then
   fi
 
   echo "Change reference"
-  docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data lyveset set_manage.pl set\_$(basename `pwd`) --change-reference $reference
+  docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data lyveset set_manage.pl set\_$(basename `pwd`) --change-reference "$reference"
   echo "Set"
-  docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data lyveset launch_set.pl set\_$(basename `pwd`) -ref $reference \
+  docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data lyveset launch_set.pl set\_$(basename `pwd`) -ref "$reference" \
                      --min_coverage 20 --min_alt_frac 0.95 --allowedFlanking 5 --mask-phages --numcpus $(nproc) &>/dev/null
   rm *cleaned.fastq.gz
   echo "DONE"
@@ -154,16 +154,17 @@ else
 
   echo "Change reference"
   #check if links exist don't add, if not remove all links and link again
-  set_manage.pl set\_$(basename `pwd`) --change-reference $reference
+  set_manage.pl set\_$(basename `pwd`) --change-reference "$reference"
   echo "Set"
-  launch_set.pl set\_$(basename `pwd`) -ref $reference --min_coverage 20 --min_alt_frac 0.95 \
+  launch_set.pl set\_$(basename `pwd`) -ref "$reference" --min_coverage 20 --min_alt_frac 0.95 \
                                    --allowedFlanking 5 --mask-phages --numcpus $(nproc) &>/dev/null
   echo "DONE"
 fi
-
+: <<'END'
 if [ $? != 0 ]; then
   echo "Error"
   exit 1
 else
   rm *cleaned.fastq.gz
 fi
+END
