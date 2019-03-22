@@ -746,8 +746,8 @@ END
 
     cat KRAKEN2\_$run_name/$i.kraken2.log | tail -2 | paste - - | sed "s/^  /$i\t/" | \
                                                sponge KRAKEN2\_$run_name/$i.kraken2.log
-done
     # sponge > sudo apt-get install moreutils
+    # Test output format
     tax=`cat KRAKEN2\_$run_name/$i.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
          grep -P '\t[DPCOFGS]\t' | sed '0,/D/s//K/' | awk -F'\t' '$4=tolower($4){ print $4"_", $6}' | \
          sed -E 's/[ ]{1,}/_/g' | tr  "\n" ";" | sed 's/;$/\n/'`
