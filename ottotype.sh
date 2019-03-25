@@ -698,13 +698,16 @@ kmer_finder(){
           -tax /database/bacteria.name -x &> /dev/null
   done
 
-#TEST
-  for i in KMERFINDER\_$run_name/*kmer
+  for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq)
   do
-    echo $i | cut -d\/ -f2 | cut -d\_ -f1
-    cat $i | tail -n+2 | head -4 | awk -F'\t' -v OFS='\t' '{ print $1, $2, $5 }' | \
-        sed 's/ //g; s/_/#/; s/\t/\&\t/; s/_.*&//; s/#/ /'
-  done > RESULTS/kmerfinder\_$run_name\_all.txt
+    name=`echo $i | cut -d\_ -f1`
+    echo "# RAW_$name"
+    cat $kraw/$i/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
+    echo
+    echo "# GENOME_$name"
+    cat $kgenome/$i/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
+    echo
+  done > RESULTS/kmerfinder\_$run_name.txt
 }
 
 kraken_tax(){
@@ -722,20 +725,23 @@ kraken_tax(){
 
   docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data kraken2 kraken2 --help
 END
+
   for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq)
   do
-    echo "$i"
-    kraken2 --paired --gzip-compressed --threads $(nproc) --use-mpa-style \
+    echo "$i"  # --use-mpa-style
+    kraken2 --paired --gzip-compressed --threads $(nproc) \
       --db $YGGDRASIL --report KRAKEN2\_$run_name/$i.kraken2-report.tsv \
       $i\_R1.fastq.gz $i\_R2.fastq.gz > /dev/null 2> KRAKEN2\_$run_name/$i.kraken2.log
 
+    cat KRAKEN2\_$run_name/$i.kraken2.log | tail -2 | paste - - | sed "s/^  /$i\t/" | \
+                                               sponge KRAKEN2\_$run_name/$i.kraken2.log
+done
     # sponge > sudo apt-get install moreutils
     tax=`cat KRAKEN2\_$run_name/$i.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
          grep -P '\t[DPCOFGS]\t' | sed '0,/D/s//K/' | awk -F'\t' '$4=tolower($4){ print $4"_", $6}' | \
          sed -E 's/[ ]{1,}/_/g' | tr  "\n" ";" | sed 's/;$/\n/'`
     echo -e "$i\t$tax" > KRAKEN2\_$run_name/$i.tax.tsv
-    cat KRAKEN2\_$run_name/$i.kraken2.log | tail -2 | paste - - | sed "s/^  /$i\t/" | \
-                                               sponge KRAKEN2\_$run_name/$i.kraken2.log
+
   done
  #Test
   cat KRAKEN2\_$run_name/*tax.tsv | awk 'BEGIN { FS="\t"; OFS="\t" } { $2=$2 "\t" $2 } 1'| \
