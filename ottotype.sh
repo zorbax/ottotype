@@ -114,6 +114,20 @@ EOF
 . ~/.bashrc
 }
 
+check_connection(){
+  echo -e "Network Status\n" &>> $log_file
+  adress=`ip r | grep default | cut -d ' ' -f 3`
+  up=`ping -q -w 1 -c 1 $adress > /dev/null && echo ok || echo error`
+  if [ $up == ok ]; then
+    echo -e "SESSION_TYPE=local\n" &>> $log_file
+  elif [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+    echo -e "SESSION_TYPE=remote/ssh\n" &>> $log_file
+  else
+    echo -e "Network Error, please check your internet connection\n" &>> $log_file
+    exit 1
+  fi
+}
+
 check_dependencies(){
   counter=0
   printf '\n%s\t%20s\n' "DEPENDENCY" "STATUS"
@@ -217,15 +231,12 @@ check_databases(){
 }
 
 checklist(){
-
   check_path &>> $log_file # || error ${LINENO} $(basename $0)
-
+  check_connection
   check_dependencies salmonella.py minimap2 translate.py trimmomatic \
       sga Rscript idba_ud500 idba_ud spades.py bwa \
       samtools mlst kraken2 bioawk &>> $log_file # || error ${LINENO} $(basename $0)
-
   check_dockers seqsero srst2 ariba &>> $log_file  # || error ${LINENO} $(basename $0)
-
   check_databases &>> $log_file  # || error ${LINENO} $(basename $0)
 }
 
@@ -384,7 +395,7 @@ run_salmonella() {
     "ARGannot is already downloaded"
   else
     repo="https://raw.githubusercontent.com/CNRDOGM"
-    wget -q -nc "$repo/bin/master/srst2/data/ARGannot.fasta"
+    wget -q -nc "$repo/srst2/master/data/ARGannot_r3.fasta" -O ARGannot.fasta
   fi
 
   docker run --rm -it -v $(pwd):/data -w /data srst2 srst2 --log --output /data/SRST2 \
@@ -752,7 +763,7 @@ done
   cp OUTPUT/kraken\_$run_name.tax.tsv RESULTS/kraken\_$run_name.tax.tsv
 }
 
-mgmapper(){ # Testing with Component02
+mgmapper(){
   for i in $(ls *gz | cut -d\_ -f1,2 | sort | uniq)
   do
     echo $i
@@ -764,34 +775,35 @@ mgmapper(){ # Testing with Component02
 antibiotics(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir -p OUTPUT RESULTS
+  mkdir -p OUTPUT RESULTS ANTIBIOTICS_$run_name
 
-  wget -q -nc https://raw.githubusercontent.com/CNRDOGM/bin/master/srst2/data/ARGannot.fasta
+  wget -q -nc https://raw.githubusercontent.com/CNRDOGM/srst2/master/data/ARGannot_r3.fasta
   docker run --rm -it -v $(pwd):/data -w /data srst2 srst2 --log --output /data/SRST2 --input_pe *fastq.gz \
-                        --forward R1 --reverse R2 --gene_db ARGannot.fasta --threads $(nproc) &> /dev/null
+                        --forward R1 --reverse R2 --gene_db ARGannot_r3.fasta --threads $(nproc) &> /dev/null
 
- #find . -maxdepth 1 -name "SRST2_*" -type f -not -path "SRST2_$run_name/*" -exec mv {} SRST2_$run_name/ \;
+  find . -maxdepth 1 -name "SRST2_*" -type f -not -path "ANTIBIOTICS_$run_name/*" -exec mv {} ANTIBIOTICS_$run_name/ \;
 
-  cat SRST2__genes__ARGannot__results.txt | tail -n +2 | sed 's/[?*]//g' | sed -E 's/_S[0-9]{1,}_//' | \
-          perl -pe "s/\t\-/#/g; s/\#{1,}//g; s/\_[0-9]{1,}//g; s/\'\'/\-/g; s/f{3,}//" | sort \
-          > $PWD/RESULTS/srst2_$run_name\_argannot.tsv
-  mv SRST2_*genes__ARGannot__results.txt $PWD/OUTPUT
+  cat ANTIBIOTICS_$run_name/SRST2__genes__ARGannot_r3__results.txt | tail -n +2 | \
+      sed 's/[?*]//g' | sed -E 's/_S[0-9]{1,}_//' | perl -pe "s/\t\-/#/g; s/\#{1,}//g;
+      s/\_[0-9]{1,}//g; s/\'\'/\-/g; s/f{3,}//" | sort > RESULTS/antibiotics_$run_name\_argannot.tsv
 
-  translate.py $PWD/RESULTS/srst2_$run_name\_argannot.tsv $PWD/RESULTS/antibiotics_$run_name.tsv
-  translate.py $PWD/RESULTS/srst2_$run_name\_argannot.tsv $PWD/RESULTS/antibiotics_$run_name\_freq.tsv -freq
+  translate.py RESULTS/antibiotics_$run_name\_argannot.tsv RESULTS/antibiotics_r3_$run_name.tsv
+  translate.py RESULTS/antibiotics_$run_name\_argannot.tsv RESULTS/antibiotics_r3_$run_name\_freq.tsv -freq
 
   docker run --rm -it -v $(pwd):/data ariba ariba getref card card &> /dev/null && \
   docker run --rm -it -v $(pwd):/data ariba ariba prepareref -f card.fa -m card.tsv card.prepareref &> /dev/null
 
-  mkdir -p ariba\_$run_name
-  for i in $(ls *gz | grep -v trim | cut -d\_ -f1,2 | sort | uniq)
+  for i in $(ls *gz | cut -d\_ -f1,2 | sort | uniq)
   do
     docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/card.prepareref \
                              $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_card &> /dev/null && \
-    mv $i\_card ariba\_$run_name
+    mv $i\_card ANTIBIOTICS_$run_name
   done
 
-  rm -rf card.* *ARGannot*{bam,pileup,bt2,fasta,fai}
+  rm -rf card.* *ARGannot*{bt2,fasta,fai} SRST2.log
+  docker run --rm -it -v $(pwd):/data -w /data ariba ariba summary --preset all out.summary \
+                    $(find ARIBA_PIPELINE/ -type f -name report.tsv -printf "%p ")
+  # Filter out.summary from CARD
 }
 
 plasmids(){
