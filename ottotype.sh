@@ -763,15 +763,6 @@ done
   cp OUTPUT/kraken\_$run_name.tax.tsv RESULTS/kraken\_$run_name.tax.tsv
 }
 
-mgmapper(){
-  for i in $(ls *gz | cut -d\_ -f1,2 | sort | uniq)
-  do
-    echo $i
-    MGmapper_PE.pl -i $i\_R1.fastq.gz -j $i\_R2.fastq.gz -c $(nproc) -F 1,2 -S -d $i
-  done
-}
-
-
 antibiotics(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
