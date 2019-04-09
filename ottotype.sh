@@ -285,7 +285,7 @@ small_samples() {
     for i in $(cat small_samples/small_samples_size.txt | cut -d\: -f1 | sort | uniq)
     do
       echo -e "${i}\t$(zcat ${i}*R1.fastq.gz | awk 'NR%4==1' | wc -l )"
-      mv -i $i\_R*.fastq.gz $PWD/small_samples
+      mv -i ${i}_R*.fastq.gz $PWD/small_samples
     done #&>> $log_file
   fi
 }
@@ -363,20 +363,20 @@ run_salmonella() {
       mv SeqSero_result* SEQSERO_$run_name
     else
       docker run --rm -it -v $(pwd):/data -w /data seqsero SeqSero.py -m 2 \
-             -i $i\_R1.fastq.gz $i\_R2.fastq.gz &> /dev/null && mv SeqSero_result* SEQSERO_$run_name
+             -i ${i}_R1.fastq.gz ${i}_R2.fastq.gz &> /dev/null && mv SeqSero_result* SEQSERO_$run_name
     fi
   done
 
   find SEQSERO_$run_name -type f -name '*_result.txt' -exec cat {} \
-                 > OUTPUT/seqsero\_$run_name\_serotype.txt \;
+                 > OUTPUT/seqsero_${run_name}\_serotype.txt \;
 
-  cat OUTPUT/seqsero\_$run_name\_serotype.txt | grep \: | grep -v "^\*\|^Sdf" | \
+  cat OUTPUT/seqsero_${run_name}\_serotype.txt | grep \: | grep -v "^\*\|^Sdf" | \
       grep "serotype\|R1" | sed '/^$/d; s/\:.*Ty/: Ty/; s/_R1.*$//
       s/^.*(s):/Salmonella enterica subsp. enterica serovar/'| tr '\t' ' ' | \
       tr -d '*' | paste - - | cut -d\: -f1 --complement | sed 's/^ //' | sort \
       > RESULTS/seqsero_$run_name\_st01_name.tsv
 
-  cat OUTPUT/seqsero\_$run_name\_serotype.txt | grep \: | grep -v "^\*\|^Sdf" | \
+  cat OUTPUT/seqsero_${run_name}\_serotype.txt | grep \: | grep -v "^\*\|^Sdf" | \
       sed 's/H[12].*(//; s/_R1.*$//; s/^.*(s)/Serotipo/;
       s/[)*]//; s/^.*ofile/Perfil antigénico/; s/^O.*:/Antígeno O:/' | \
       tr '\t' ' ' | paste - - - - - - | cut -d\: -f1 --complement | \
@@ -439,21 +439,21 @@ run_salmonella() {
     cat $HOME/bin/Strain_Senterica.tsv | grep -w ^$st | \
       awk -v var="$id" -v OFS='\t' '{ print var, $0}' | \
       awk 'BEGIN {FS="\t"} $10!="" {print}' \
-      >> RESULTS/srst2\_$run_name\_enterobase.tsv
+      >> RESULTS/srst2_${run_name}\_enterobase.tsv
 
     cat $HOME/bin/Strain_Senterica.tsv | grep -w ^$st | \
     awk -v var="$id" -v OFS='\t' '{ print var, $0}' | \
         awk 'BEGIN {FS="\t"} $10=="" {print}' >> RESULTS/null.tsv
   done < RESULTS/srst2_$run_name\_achtman.tsv
 
-  cat RESULTS/srst2\_$run_name\_enterobase.tsv | awk '{ print $1, $2, $11, $10 }' | \
+  cat RESULTS/srst2_${run_name}\_enterobase.tsv | awk '{ print $1, $2, $11, $10 }' | \
       sed 's/ /\nST:#/; s/ /\neBG:#/; s/ /\nSerotipo:#/; s/#/ /g' \
-      > RESULTS/srst2\_$run_name\_st02_enterobase.tsv
+      > RESULTS/srst2_${run_name}\_st02_enterobase.tsv
 
-  id1=`cat RESULTS/srst2\_$run_name\_enterobase.tsv | cut -f1 | sort | uniq`
+  id1=`cat RESULTS/srst2_${run_name}\_enterobase.tsv | cut -f1 | sort | uniq`
   id2=`cat RESULTS/null.tsv | cut -f1 | sort | uniq`
   diff <(echo "$id1") <(echo "$id2") | grep "^\>" \
-       > RESULTS/srst2\_$run_name\_NF_enterobase.tsv 2>/dev/null
+       > RESULTS/srst2_${run_name}\_NF_enterobase.tsv 2>/dev/null
 
   find RESULTS/ -type f -name "null.tsv" -delete -or -size 0 -delete
 
@@ -471,12 +471,12 @@ run_salmonella() {
     for i in $(cat $file | cut -f1)
     do
       docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/Salmonella/ref_db \
-                                $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_ariba &> /dev/null && \
-      mv $i\_ariba ARIBA\_$run_name
+                                ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_ariba &> /dev/null && \
+      mv ${i}_ariba ARIBA_${run_name}
 
       docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/card.prepareref \
-                               $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_card &> /dev/null && \
-      mv $i\_card ARIBA\_$run_name
+                               ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_card &> /dev/null && \
+      mv ${i}_card ARIBA_${run_name}
     done
   fi
 
@@ -521,7 +521,7 @@ run_salmonella() {
       sed 's/ /\nST:#/; s/ /\neBG:#/; s/ /\nSerotipo:#/; s/#/ /g' \
       > RESULTS/ariba_$run_name\_st02_enterobase.tsv
 
-  id1=`cat RESULTS/ariba\_$run_name\_enterobase.tsv | cut -f1 | sort | uniq`
+  id1=`cat RESULTS/ariba_${run_name}\_enterobase.tsv | cut -f1 | sort | uniq`
   id2=`cat RESULTS/null.tsv | cut -f1 | sort | uniq`
   diff <(echo "$id1") <(echo "$id2") | grep "^\>" \
        > RESULTS/ariba_$run_name\_NF_enterobase.tsv 2>/dev/null
@@ -539,9 +539,9 @@ trimming() {
   mkdir -p $PWD/TRIMMING/1U2U
   for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq )
   do
-    trimmomatic PE -phred33 -threads $(nproc) $i\_R1.fastq.gz $i\_R2.fastq.gz \
-              TRIMMING/$i\_R1.trim.fastq.gz TRIMMING/1U2U/$i.1U.trim.fastq.gz \
-              TRIMMING/$i\_R2.trim.fastq.gz TRIMMING/1U2U/$i.2U.trim.fastq.gz \
+    trimmomatic PE -phred33 -threads $(nproc) ${i}_R1.fastq.gz ${i}_R2.fastq.gz \
+              TRIMMING/${i}_R1.trim.fastq.gz TRIMMING/1U2U/$i.1U.trim.fastq.gz \
+              TRIMMING/${i}_R2.trim.fastq.gz TRIMMING/1U2U/$i.2U.trim.fastq.gz \
               SLIDINGWINDOW:4:20 MINLEN:70 &> $i.trim.log
 
     if [ $? -eq 0 ]; then
@@ -557,44 +557,44 @@ assembly() {
     mkdir -p $PWD/ASSEMBLY
 
     name=$(basename $i)
-    echo "$name"
-    sga preprocess -q 25 -f 20 --pe-mode=1  $i\_R1.trim.fastq.gz $i\_R2.trim.fastq.gz > $name\_12.t.pp.fq 2> /dev/null
-    median=`cat $name\_12.t.pp.fq | awk 'NR%4==2 { print length }' | head -20000 | \
+    echo "${name}"
+    sga preprocess -q 25 -f 20 --pe-mode=1  ${i}_R1.trim.fastq.gz ${i}_R2.trim.fastq.gz > ${name}_12.t.pp.fq 2> /dev/null
+    median=`cat ${name}_12.t.pp.fq | awk 'NR%4==2 { print length }' | head -20000 | \
             Rscript -e 'summary (as.numeric (readLines ("stdin")))' | tail -n+2 | \
             awk '{ print $3 }'  | cut -d\. -f1`
 
     if [ $median -le 200 ]; then
       #mem=`cat /proc/meminfo | grep MemTotal | awk '{ print $2}'`
       #kb=$(echo "($mem*0.5)" | bc | cut -d\. -f1)
-      sga index -t $(nproc) -a ropebwt $name\_12.t.pp.fq > $name.index.out 2> $name.index.err
-      sga correct -t $(nproc) $name\_12.t.pp.fq -o $name\_12.t.pp.ec.fq > $name.correct.out 2> $name.correct.err
+      sga index -t $(nproc) -a ropebwt ${name}_12.t.pp.fq > ${name}.index.out 2> ${name}.index.err
+      sga correct -t $(nproc) ${name}_12.t.pp.fq -o ${name}_12.t.pp.ec.fq > ${name}.correct.out 2> ${name}.correct.err
     else
-      sga index -t $(nproc) -a sais $name\_12.t.pp.fq > $name.index.out 2> $name.index.err
-      sga correct -t $(nproc) $name\_12.t.pp.fq -o $name\_12.t.pp.ec.fq > $name.correct.out 2> $name.correct.err
+      sga index -t $(nproc) -a sais ${name}_12.t.pp.fq > ${name}.index.out 2> ${name}.index.err
+      sga correct -t $(nproc) ${name}_12.t.pp.fq -o ${name}_12.t.pp.ec.fq > ${name}.correct.out 2> ${name}.correct.err
     fi
 
-    sed -n '1~4s/^@/>/p;2~4p' $name\_12.t.pp.ec.fq > $name\_12.t.pp.ec.fa
-    medianec=`cat $name\_12.t.pp.ec.fa | awk '$0 !~ /^>/ { print length }' | head -20000 | \
+    sed -n '1~4s/^@/>/p;2~4p' ${name}_12.t.pp.ec.fq > ${name}_12.t.pp.ec.fa
+    medianec=`cat ${name}_12.t.pp.ec.fa | awk '$0 !~ /^>/ { print length }' | head -20000 | \
               Rscript -e 'summary (as.numeric (readLines ("stdin")))' | tail -n+2 | \
               awk '{ print $3}'  | cut -d\. -f1`
 
     if [[ $medianec -ge 128 ]]; then
-      idba_ud500 -r $name\_12.t.pp.ec.fa -o $name --mink 35 --maxk 249 --num_threads $(nproc) --min_pairs 2 > /dev/null
+      idba_ud500 -r ${name}_12.t.pp.ec.fa -o ${name} --mink 35 --maxk 249 --num_threads $(nproc) --min_pairs 2 > /dev/null
     else
-      idba_ud -r $name\_12.t.pp.ec.fa -o $name --mink 35 --maxk 124 --num_threads $(nproc) --min_pairs 2 > /dev/null
+      idba_ud -r ${name}_12.t.pp.ec.fa -o ${name} --mink 35 --maxk 124 --num_threads $(nproc) --min_pairs 2 > /dev/null
     fi
 
     if [ $? != 0 ]; then
-       cp $name/contig.fa $name-idba-assembly.fa
+       cp ${name}/contig.fa ${name}-idba-assembly.fa
     else
-       cp $name/scaffold.fa $name-idba-assembly.fa
+       cp ${name}/scaffold.fa ${name}-idba-assembly.fa
     fi
 
-    rm -rf *pp.{fq,bwt,sai,rbwt} *out *err *rsai *ec.{fq,fa} $name
+    rm -rf *pp.{fq,bwt,sai,rbwt} *out *err *rsai *ec.{fq,fa} ${name}
 
-    cat $name-idba-assembly.fa | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
-         awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' > $PWD/ASSEMBLY/$name-idba-assembly.fa
-    rm $name-idba-assembly.fa
+    cat ${name}-idba-assembly.fa | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
+         awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' > $PWD/ASSEMBLY/${name}-idba-assembly.fa
+    rm ${name}-idba-assembly.fa
   done
 }
 
@@ -604,14 +604,14 @@ assembly_spades() {
   for i in $(ls TRIMMING/*gz | cut -d\_ -f1,2 | sort | uniq)
   do
     name=`echo $i | cut -d\/ -f2`
-    spades.py --pe1-1 TRIMMING/$name\_R1.trim.fastq.gz --pe1-2 TRIMMING/$name\_R2.trim.fastq.gz \
-        --pe1-s TRIMMING/1U2U/$name.1U.trim.fastq.gz --pe1-s TRIMMING/1U2U/$name.2U.trim.fastq.gz \
-        -o $name\_spades -t $(nproc) -m $memory &>/dev/null
+    spades.py --pe1-1 TRIMMING/${name}_R1.trim.fastq.gz --pe1-2 TRIMMING/${name}_R2.trim.fastq.gz \
+        --pe1-s TRIMMING/1U2U/${name}.1U.trim.fastq.gz --pe1-s TRIMMING/1U2U/${name}.2U.trim.fastq.gz \
+        -o ${name}_spades -t $(nproc) -m $memory &>/dev/null
   # --careful --only-assembler using sga corrected reads
-  find $name\_spades -maxdepth 2 -type f -name 'scaffolds.fasta' -exec cp {} $name.tmp \;
-  cat $name.tmp | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
-       awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' > ASSEMBLY/$name-spades-assembly.fa
-  rm -rf $name\_spades $name.tmp
+  find ${name}_spades -maxdepth 2 -type f -name 'scaffolds.fasta' -exec cp {} ${name}.tmp \;
+  cat ${name}.tmp | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
+       awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' > ASSEMBLY/${name}-spades-assembly.fa
+  rm -rf ${name}_spades ${name}.tmp
 done
 }
 
@@ -627,41 +627,41 @@ assembly_stats_cov() {
     name=`echo $assembly | cut -d\/ -f2`
     reads=TRIMMING/$(basename $i | cut -d\- -f1)
 
-    echo -e "Assembly:\t$name" | tee $name.stats
-    bwa index -a bwtsw $i -p $name &> /dev/null
-    bwa mem -t $(nproc) $name $reads\_R1.trim.fastq.gz $reads\_R2.trim.fastq.gz \
+    echo -e "Assembly:\t${name}" | tee ${name}.stats
+    bwa index -a bwtsw $i -p ${name} &> /dev/null
+    bwa mem -t $(nproc) ${name} $reads\_R1.trim.fastq.gz $reads\_R2.trim.fastq.gz \
     2> /dev/null | samtools view -Sb -F4 -@ $(nproc) - | \
-    samtools sort -@ $(nproc) - -o $name.mapped.sorted.bam 2>/dev/null
-    samtools index -@ $(nproc) $name.mapped.sorted.bam
-    rm $name.{bwt,pac,ann,amb,sa}
+    samtools sort -@ $(nproc) - -o ${name}.mapped.sorted.bam 2>/dev/null
+    samtools index -@ $(nproc) ${name}.mapped.sorted.bam
+    rm ${name}.{bwt,pac,ann,amb,sa}
 
-    cov=$(samtools mpileup $name.mapped.sorted.bam 2> /dev/null | \
+    cov=$(samtools mpileup ${name}.mapped.sorted.bam 2> /dev/null | \
       awk '{ count++ ; sum += $4 } END { printf "%s\t%.2f\n", "Coverage:", sum/count }')
     cover=`echo $cov | awk '{ print $2 }'`
 
     cat $i | awk '!/^>/ { printf "%s", $0; n = "\n" } /^>/ { print n $0; n = "" } END { printf "%s", n }'| \
-                                 sed '/^>/ d'| awk '{ print length($0) }' | sort -gr > $name\_contig_lengths.stat
+                                 sed '/^>/ d'| awk '{ print length($0) }' | sort -gr > ${name}_contig_lengths.stat
 
-    contigs_number=$(cat $name\_contig_lengths.stat | wc -l)
-    assembly_size=$(paste -sd+ $name\_contig_lengths.stat | bc)
-    awk 'BEGIN {sum=0} {sum= sum+$0; print sum}' $name\_contig_lengths.stat > $name\_contig_lengths_cum.stat
+    contigs_number=$(cat ${name}_contig_lengths.stat | wc -l)
+    assembly_size=$(paste -sd+ ${name}_contig_lengths.stat | bc)
+    awk 'BEGIN {sum=0} {sum= sum+$0; print sum}' ${name}_contig_lengths.stat > ${name}_contig_lengths_cum.stat
 
     awk -v var=$assembly_size 'BEGIN {FS=OFS=","} {for (i=1; i<=NF; i++) $i/=var;}1' \
-                                    $name\_contig_lengths_cum.stat > $name\_cum_perc.stat
+                                    ${name}_contig_lengths_cum.stat > ${name}_cum_perc.stat
 
-    paste $name\_contig_lengths.stat $name\_cum_perc.stat > $name\_matrix.stat
+    paste ${name}_contig_lengths.stat ${name}_cum_perc.stat > ${name}_matrix.stat
 
-    N50=$(awk '$2 >= 0.50' $name\_matrix.stat | head -1 | awk '{ print $1 }')
-    N90=$(awk '$2 >= 0.90' $name\_matrix.stat | head -1 | awk '{ print $1 }')
-    large_contig=$(head -1 $name\_contig_lengths.stat)
+    N50=$(awk '$2 >= 0.50' ${name}_matrix.stat | head -1 | awk '{ print $1 }')
+    N90=$(awk '$2 >= 0.90' ${name}_matrix.stat | head -1 | awk '{ print $1 }')
+    large_contig=$(head -1 ${name}_contig_lengths.stat)
 
     rm *stat
-    echo -e "Number of contigs:\t$contigs_number\n$cov" >> $name.stats
-    echo -e "Assembly size:\t$assembly_size" >> $name.stats
-    echo -e "Largest contig:\t$large_contig" >> $name.stats
-    echo -e "N50:\t$N50\nN90:\t$N90" >> $name.stats
-    mv $name.stats ASSEMBLY/Stats
-    echo -e "$name\t$contigs_number\t$cover\t$assembly_size\t$large_contig\t$N50\t$N90" >> assembly_$run_name.stats
+    echo -e "Number of contigs:\t$contigs_number\n$cov" >> ${name}.stats
+    echo -e "Assembly size:\t$assembly_size" >> ${name}.stats
+    echo -e "Largest contig:\t$large_contig" >> ${name}.stats
+    echo -e "N50:\t$N50\nN90:\t$N90" >> ${name}.stats
+    mv ${name}.stats ASSEMBLY/Stats
+    echo -e "${name}\t$contigs_number\t$cover\t$assembly_size\t$large_contig\t$N50\t$N90" >> assembly_$run_name.stats
     find . -maxdepth 1 -type f \( -name "*.bam" -o -name "*.bai" \) -exec rm {} \;
   done
   mv assembly_$run_name.stats $PWD/OUTPUT && cp $PWD/OUTPUT/assembly_$run_name.stats $PWD/RESULTS
@@ -669,24 +669,24 @@ assembly_stats_cov() {
 
 assembly_mlst(){
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir -p ASSEMBLY_MLST\_$run_name OUTPUT RESULTS
+  mkdir -p ASSEMBLY_MLST_${run_name} OUTPUT RESULTS
   cd ASSEMBLY
   for i in *assembly.fa
   do
-    mlst --csv $i --threads $(nproc) >> ../ASSEMBLY_MLST\_$run_name/assembly_mlst\_$run_name.csv 2> /dev/null
+    mlst --csv $i --threads $(nproc) >> ../ASSEMBLY_MLST_${run_name}/assembly_mlst_${run_name}.csv 2> /dev/null
   done
   cd ..
-  cat ASSEMBLY_MLST\_$run_name/assembly_mlst\_$run_name.csv | sed 's/-assembly.fa//; s/,/\t/g' | \
-        sort | tee OUTPUT/assembly_mlst\_$run_name.tsv RESULTS/assembly_mlst\_$run_name.tsv > /dev/null
+  cat ASSEMBLY_MLST_${run_name}/assembly_mlst_${run_name}.csv | sed 's/-assembly.fa//; s/,/\t/g' | \
+        sort | tee OUTPUT/assembly_mlst_${run_name}.tsv RESULTS/assembly_mlst_${run_name}.tsv > /dev/null
 
-  cat OUTPUT/assembly_mlst\_$run_name.tsv | sed 's/^/\n>/; s/\t/\tST /2; s/\t/\n/g' \
-      > RESULTS/assembly_mlst\_$run_name.list
+  cat OUTPUT/assembly_mlst_${run_name}.tsv | sed 's/^/\n>/; s/\t/\tST /2; s/\t/\n/g' \
+      > RESULTS/assembly_mlst_${run_name}.list
 }
 
 kmer_finder(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir -p KMERFINDER\_$run_name/{raw,genome}\_$run_name RESULTS/
+  mkdir -p KMERFINDER_${run_name}/{raw,genome}_${run_name} RESULTS/
 
   KmerFinder_DB=/mnt/disk1/bin/KmerFinder_DB
   kraw="KMERFINDER_$run_name/raw_$run_name"
@@ -695,7 +695,7 @@ kmer_finder(){
   for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq)
   do
     docker run --rm -it -v $KmerFinder_DB:/database -v $(pwd):/workdir \
-          -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/$i\_R1.fastq.gz \
+          -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/${i}_R1.fastq.gz \
           -o /workdir/$kraw/$i -db /database/bacteria.ATG \
           -tax /database/bacteria.name -x &> /dev/null
   done
@@ -712,25 +712,25 @@ kmer_finder(){
   for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq)
   do
     name=`echo $i | cut -d\_ -f1`
-    echo "# RAW_$name"
+    echo "# RAW_${name}"
     cat $kraw/$i/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
     echo
-    echo "# GENOME_$name"
+    echo "# GENOME_${name}"
     cat $kgenome/$i/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
     echo
-  done > RESULTS/kmerfinder\_$run_name.txt
+  done > RESULTS/kmerfinder_${run_name}.txt
 }
 
 kraken_tax(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir -p KRAKEN2\_$run_name OUTPUT RESULTS
+  mkdir -p KRAKEN2_${run_name} OUTPUT RESULTS
 
-: <<'END'
+
   YGGDRASIL=/mnt/disk2/bin/Kraken2/yggdrasil
-
+: <<'END'
   docker run --rm -it -v $YGGDRASIL:/database -v $(pwd):/workdir \
-        -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/$i\_R1.fastq.gz \
+        -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/${i}_R1.fastq.gz \
         -o /workdir/$kraw/$i -db /database/bacteria.ATG \
         -tax /database/bacteria.name -x &> /dev/null
 
@@ -741,26 +741,26 @@ END
   do
     echo "$i"  # --use-mpa-style
     kraken2 --paired --gzip-compressed --threads $(nproc) \
-      --db $YGGDRASIL --report KRAKEN2\_$run_name/$i.kraken2-report.tsv \
-      $i\_R1.fastq.gz $i\_R2.fastq.gz > /dev/null 2> KRAKEN2\_$run_name/$i.kraken2.log
+      --db $YGGDRASIL --report KRAKEN2_${run_name}/$i.kraken2-report.tsv \
+      ${i}_R1.fastq.gz ${i}_R2.fastq.gz > /dev/null 2> KRAKEN2_${run_name}/$i.kraken2.log
 
-    cat KRAKEN2\_$run_name/$i.kraken2.log | tail -2 | paste - - | sed "s/^  /$i\t/" | \
-                                               sponge KRAKEN2\_$run_name/$i.kraken2.log
+    cat KRAKEN2_${run_name}/$i.kraken2.log | tail -2 | paste - - | sed "s/^  /$i\t/" | \
+                                               sponge KRAKEN2_${run_name}/$i.kraken2.log
     # sponge > sudo apt-get install moreutils
     # Test output format
-    tax=`cat KRAKEN2\_$run_name/$i.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
+    tax=`cat KRAKEN2_${run_name}/$i.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
          grep -P '\t[DPCOFGS]\t' | sed '0,/D/s//K/' | awk -F'\t' '$4=tolower($4){ print $4"_", $6}' | \
          sed -E 's/[ ]{1,}/_/g' | tr  "\n" ";" | sed 's/;$/\n/'`
-    echo -e "$i\t$tax" > KRAKEN2\_$run_name/$i.tax.tsv
+    echo -e "$i\t$tax" > KRAKEN2_${run_name}/$i.tax.tsv
 
   done
  #Test
-  cat KRAKEN2\_$run_name/*tax.tsv | awk 'BEGIN { FS="\t"; OFS="\t" } { $2=$2 "\t" $2 } 1'| \
+  cat KRAKEN2_${run_name}/*tax.tsv | awk 'BEGIN { FS="\t"; OFS="\t" } { $2=$2 "\t" $2 } 1'| \
       sed -e 's/k__/#/; s/s__/#/; s/\(#\).*\(#\)//' | sed -E 's/_S[0-9]{1,}//' | \
       awk -F'\t' -v OFS='\t' '{gsub(";s_"," |",$2);gsub("_"," ",$2)}1' | \
-      perl -pe 'if(/\#/){s/\ /\_/g}' > OUTPUT/kraken\_$run_name.tax.tsv
+      perl -pe 'if(/\#/){s/\ /\_/g}' > OUTPUT/kraken_${run_name}.tax.tsv
   #sed 's/;p  /#/; s/|/#|/; s/\(#\).*\(#\)/ /'
-  cp OUTPUT/kraken\_$run_name.tax.tsv RESULTS/kraken\_$run_name.tax.tsv
+  cp OUTPUT/kraken_${run_name}.tax.tsv RESULTS/kraken_${run_name}.tax.tsv
 }
 
 antibiotics(){
@@ -787,8 +787,8 @@ antibiotics(){
   for i in $(ls *gz | cut -d\_ -f1,2 | sort | uniq)
   do
     docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/card.prepareref \
-                             $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_card &> /dev/null && \
-    mv $i\_card ANTIBIOTICS_$run_name
+                             ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_card &> /dev/null && \
+    mv ${i}_card ANTIBIOTICS_$run_name
   done
 
   rm -rf card.* *ARGannot*{bt2,fasta,fai} SRST2.log
@@ -808,9 +808,9 @@ plasmids(){
     cp ASSEMBLY/$i-idba-assembly.fa $i.fna
     docker run --rm -it -v $(pwd):/data -w /data \
           buisciii/plasmidid plasmidID.sh \
-          -1 $i\_R1.fastq.gz -2 $i\_R2.fastq.gz -T $(nproc)\
+          -1 ${i}_R1.fastq.gz -2 ${i}_R2.fastq.gz -T $(nproc)\
           -d plasmid.salmonella.nr100.fna -M $memory\
-          -c $i.fna --no-trim -s $i -g plasmids\_$run_name
+          -c $i.fna --no-trim -s $i -g plasmids_${run_name}
     rm $i.fna
   done
   rm plasmid.complete.nr100.fna
@@ -933,11 +933,11 @@ END
 
 run_name=$(basename `pwd` | cut -d\_ -f1)
 path_results=`find . -type d -name RESULTS`
-mkdir RESULTS\_$run_name
+mkdir RESULTS_${run_name}
 
 for i in $path_results
 do
-  cp $i/* RESULTS\_$run_name
+  cp $i/* RESULTS_${run_name}
 done
 
 end &>> $log_file
