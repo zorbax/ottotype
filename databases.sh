@@ -64,12 +64,8 @@ elif [ ! -f "$dbKmerfinder" ]; then
     if [[ $REPLY =~ ^[Yy]$ ]]; then
       KmerFinder_DB=$HOME/bin/KmerFinder_DB
       current_dir=$(pwd)
-      #cd $HOME/bin && \
-      #git clone https://bitbucket.org/genomicepidemiology/kmerfinder_db.git
-      #cd kmerfinder_db && bash INSTALL.sh $KmerFinder_DB bacteria latest
-      #python3 VALIDATE.py $KmerFinder_DB bacteria
-      #cd .. && rm -rf kmerfinder_db && cd $current_dir
-      wget ftp://ftp.cbs.dtu.dk/public/CGE/databases/KmerFinder/version/latest/{config,bacteria*} -P $KmerFinder_DB
+      server="ftp://ftp.cbs.dtu.dk/public/CGE/databases/KmerFinder"
+      wget $server/version/latest/{config,bacteria*} -P $KmerFinder_DB
       tar -xzf $KmerFinder_DB/bacteria.tar.gz -C $KmerFinder_DB
       rm $KmerFinder_DB/*.tar.gz && cd $KmerFinder_DB
       if [ ! -f "bacteria.name" ]; then
