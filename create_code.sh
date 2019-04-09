@@ -2,9 +2,9 @@
 
 grep < ARGannot_r3.fasta \> | sed 's/ /;/' | \
   tr ';' '\t' | awk -v OFS='\t' '{ print $5, $4}' | \
-  sed 's/Agly/AGly/g' | tee >( sort -k1,2 > code.raw.tsv)\
-  >( cut -f1 | sort | uniq > categories.txt)\
-  > /dev/null
+  sed 's/Agly/AGly/g' | tee >( sort -k1,2 \
+  > antibiotics_code.v3.tsv) >( cut -f1 | sort | \
+  uniq > categories.txt) > /dev/null
 
 samples=(
          "AGly:Aminoglucósidos" "Bla:Betalactámicos"
@@ -17,17 +17,17 @@ samples=(
          "Tmt:Trimetroprima"
         )
 
-while read line
+for i in $(cat categories.txt)
 do
-  col=$(echo $line | cut -f1)
-  gene=$(echo $line | cut -f2)
   for k in "${samples[@]}"
   do
-    key="${k%%:*}"
-    val="${k##*:}"
+     key="${k%%:*}"
+     val="${k##*:}"
 
-    if [ ${col} == ${key} ] ; then
-      echo -e "${val}\t${gene}"
-    fi
+     if [ ${i} == ${key} ] ; then
+       sed -i "s/${i}/${val}/" antibiotics_code.v3.tsv
+     fi
   done
-done < <(cat code.raw.tsv)
+done
+
+rm categories.txt

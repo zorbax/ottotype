@@ -28,12 +28,13 @@ def main():
     args = parser.parse_args()
 
     argannot = Path(os.path.join(
-                    os.path.expanduser('~'), "bin/antibiotics_code.tsv"))
+                    os.path.expanduser('~'), "bin/antibiotics_code.v3.tsv"))
     try:
         arg_path = argannot.resolve()
         # print(arg_path)
     except FileNotFoundError:
-        url = 'https://git.io/vpNpz'
+        url = 'https://git.io/fjtPO'
+        # url = 'https://git.io/vpNpz' #v1
         wget.download(url, str(argannot))
 
     code = {}
