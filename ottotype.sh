@@ -557,7 +557,7 @@ trimming() {
 
 assembly() {
 
-  for i in TRIMMING/*R1.trim.fastq.gz
+  for r1 in TRIMMING/*R1.trim.fastq.gz
   do
     mkdir -p $PWD/ASSEMBLY
 
@@ -615,13 +615,11 @@ assembly_spades() {
   mkdir -p ASSEMBLY
   memory=$(awk '{ printf "%.2f", $2/1024/1024 ; exit}' /proc/meminfo | cut -d\. -f1)
 
-  for i in *TRIMMING/*R1.trim.fastq.gz 
-      $(ls TRIMMING/*gz | cut -d\_ -f1,2 | sort | uniq)
+  for r1 in *TRIMMING/*R1.trim.fastq.gz 
   do
     r2="${r1/R1/R2}"
     name="${r1##*/}"; name="${name%%_R1*}"
-    spades.py --pe1-1 TRIMMING/${name}_R1.trim.fastq.gz \
-              --pe1-2 TRIMMING/${name}_R2.trim.fastq.gz \
+    spades.py --pe1-1 $r1 --pe1-2 $r2 \
               --pe1-s TRIMMING/1U2U/${name}.1U.trim.fastq.gz \
               --pe1-s TRIMMING/1U2U/${name}.2U.trim.fastq.gz \
               -o ${name}_spades -t $(nproc) -m $memory &>/dev/null
@@ -702,6 +700,7 @@ assembly_mlst(){
   run_name=$(basename `pwd` | cut -d\_ -f1)
   mkdir -p ASSEMBLY_MLST_${run_name} OUTPUT RESULTS
   cd ASSEMBLY
+  
   for i in *assembly.fa
   do
     mlst --csv $i --threads $(nproc) \
@@ -728,31 +727,32 @@ kmer_finder(){
   kraw="KMERFINDER_$run_name/raw_$run_name"
   kgenome="KMERFINDER_$run_name/genome_$run_name"
 
-  for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq)
+  for r1 in *R1.fastq.gz
   do
+    name="${r1%%_R1*}"
     docker run --rm -it -v $KmerFinder_DB:/database -v $(pwd):/workdir \
-          -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/${i}_R1.fastq.gz \
-          -o /workdir/$kraw/$i -db /database/bacteria.ATG \
+          -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/${r1} \
+          -o /workdir/$kraw/${name} -db /database/bacteria.ATG \
           -tax /database/bacteria.name -x &> /dev/null
   done
 
   for i in ASSEMBLY/*assembly.fa
   do
-    genome_name=`basename $i | cut -d\- -f1 | cut -d\/ -f2`
+    genome_name="${i##*/}"; name="${name%%-*}"
     docker run --rm -it -v $KmerFinder_DB:/database -v $(pwd):/workdir \
           -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/$i \
           -o /workdir/$kgenome/$genome_name -db /database/bacteria.ATG \
           -tax /database/bacteria.name -x &> /dev/null
   done
 
-  for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq)
+  for i in *R1.fastq.gz
   do
-    name=`echo $i | cut -d\_ -f1`
+    name="${i%%_R1*}"
     echo "# RAW_${name}"
-    cat $kraw/$i/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
+    cat $kraw/${name}/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
     echo
     echo "# GENOME_${name}"
-    cat $kgenome/$i/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
+    cat $kgenome/${name}/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
     echo
   done > RESULTS/kmerfinder_${run_name}.txt
 }
@@ -773,21 +773,23 @@ kraken_tax(){
   docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data kraken2 kraken2 --help
 END
 
-  for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq)
+  for r1 in *R1.fastq.gz 
   do
+    r2="${r1/R1/R2}"
+    name="${r1%%_R1*}"
     echo "$i"  # --use-mpa-style
     kraken2 --paired --gzip-compressed --threads $(nproc) \
-      --db $YGGDRASIL --report KRAKEN2_${run_name}/$i.kraken2-report.tsv \
-      ${i}_R1.fastq.gz ${i}_R2.fastq.gz > /dev/null 2> KRAKEN2_${run_name}/$i.kraken2.log
+      --db $YGGDRASIL --report KRAKEN2_${run_name}/${name}.kraken2-report.tsv \
+      ${r1} ${r2} > /dev/null 2> KRAKEN2_${run_name}/${name}.kraken2.log
 
-    cat KRAKEN2_${run_name}/$i.kraken2.log | tail -2 | paste - - | sed "s/^  /$i\t/" | \
-                                               sponge KRAKEN2_${run_name}/$i.kraken2.log
+    cat KRAKEN2_${run_name}/${name}.kraken2.log | tail -2 | paste - - | sed "s/^  /${name}\t/" | \
+                                               sponge KRAKEN2_${run_name}/${name}.kraken2.log
     # sponge > sudo apt-get install moreutils
     # Test output format
-    tax=`cat KRAKEN2_${run_name}/$i.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
+    tax=`cat KRAKEN2_${run_name}/${name}.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
          grep -P '\t[DPCOFGS]\t' | sed '0,/D/s//K/' | awk -F'\t' '$4=tolower($4){ print $4"_", $6}' | \
          sed -E 's/[ ]{1,}/_/g' | tr  "\n" ";" | sed 's/;$/\n/'`
-    echo -e "$i\t$tax" > KRAKEN2_${run_name}/$i.tax.tsv
+    echo -e "$i\t$tax" > KRAKEN2_${run_name}/${name}.tax.tsv
 
   done
  #Test
