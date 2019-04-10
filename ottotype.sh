@@ -14,7 +14,7 @@ end(){
   echo -e "\n\n========"
   echo "  DONE"
   echo -e "========\n\n"
-  R=$[$(date +%s)-$T]
+  R=$(($(date +%s)-$T))
   D=$((R/60/60/24))
   H=$((R/60/60%24))
   M=$((R/60%60))
@@ -35,7 +35,7 @@ tm() {
   local command="$@"
   $@
   rc=$?
-  local R=$[$(date +%s)-$T]
+  local R=$(($(date +%s)-$T))
   local D=$((R/60/60/24))
   local H=$((R/60/60%24))
   local M=$((R/60%60))
@@ -116,9 +116,9 @@ EOF
 
 check_connection(){
   echo -e "Network Status\n" &>> $log_file
-  adress=`ip r | grep default | cut -d ' ' -f 3`
-  up=`ping -q -w 1 -c 1 $adress > /dev/null && echo ok || echo error`
-  if [ $up == ok ]; then
+  adress=$(ip r | grep default | cut -d ' ' -f 3)
+  up=$(ping -q -w 1 -c 1 "$adress" > /dev/null && echo ok || echo error)
+  if [ "$up" == "ok" ]; then
     echo -e "SESSION_TYPE=local\n" &>> $log_file
   elif [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
     echo -e "SESSION_TYPE=remote/ssh\n" &>> $log_file
@@ -246,7 +246,7 @@ clean() {
   for i in *fastq.gz
   do
     if  [[ $i == SRR* ]] || [[ $i == ERR* ]] || [[ $i == DRR* ]]; then
-      rename 's/_R([12])/_S01_R$1/' $i
+      rename "s/_R([12])/_S01_R$1/" $i
     fi
   done
   echo -e "\n\n# The filenames were renamed with the ${FUNCNAME[0]} function" &>> $log_file
