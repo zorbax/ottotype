@@ -764,6 +764,7 @@ kraken_tax(){
 
 
   YGGDRASIL=/mnt/disk2/bin/Kraken2/yggdrasil
+
 : <<'END'
   docker run --rm -it -v $YGGDRASIL:/database -v $(pwd):/workdir \
         -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/${i}_R1.fastq.gz \
@@ -785,26 +786,16 @@ END
 
     cat KRAKEN2_${run_name}/${name}.kraken2.log | tail -2 | paste - - | sed "s/^  /${name}\t/" | \
                                                sponge KRAKEN2_${run_name}/${name}.kraken2.log
-    # sponge > sudo apt-get install moreutils
-    # Test output format
-    tax=$(cat KRAKEN2_${run_name}/${name}.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
-         grep -P '\t[PCOFGS]\t' | awk -F'\t' '$4=tolower($4){ print $4"_", $6}' | \
-         sed -E 's/[ ]{1,}/_/g' | tr  "\n" ";" | sed 's/;$/\n/')
-
+    # rs and sponge > sudo apt-get install moreutils rs
     tax=$(cat KRAKEN2_${run_name}/${name}.kraken2-report.tsv | \
           awk -F'\t' '{if($1>5) print }' | grep -P '\t[S]\t'| \
           awk -F'\t' '{ print $6, "#"$1}' | sed -E 's/^ {1,}//; s/[ ]{1,}/_/g' | \
           rs -TeC | sed 's/_#_/ /g')
 
-    echo -e "${name}\t$tax" > KRAKEN2_${run_name}/${name}.tax.tsv
+    echo -e "${name}\t$tax" >> OUTPUT/kraken2_${run_name}.tax.tsv
   done
 
-  cat KRAKEN2_${run_name}/*tax.tsv | awk 'BEGIN { FS="\t"; OFS="\t" } { $2=$2 "\t" $2 } 1'| \
-      sed -e 's/k__/#/; s/s__/#/; s/\(#\).*\(#\)//' | sed -E 's/_S[0-9]{1,}//' | \
-      awk -F'\t' -v OFS='\t' '{gsub(";s_"," |",$2);gsub("_"," ",$2)}1' | \
-      perl -pe 'if(/\#/){s/\ /\_/g}' > OUTPUT/kraken_${run_name}.tax.tsv
-  #sed 's/;p  /#/; s/|/#|/; s/\(#\).*\(#\)/ /'
-  cp OUTPUT/kraken_${run_name}.tax.tsv RESULTS/kraken_${run_name}.tax.tsv
+  cp OUTPUT/kraken2_${run_name}.tax.tsv RESULTS/kraken2_${run_name}.tax.tsv
 }
 
 antibiotics(){
