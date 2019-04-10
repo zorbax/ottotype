@@ -777,6 +777,7 @@ END
   do
     r2="${r1/R1/R2}"
     name="${r1%%_R1*}"
+
     echo "$i"  # --use-mpa-style
     kraken2 --paired --gzip-compressed --threads $(nproc) \
       --db $YGGDRASIL --report KRAKEN2_${run_name}/${name}.kraken2-report.tsv \
@@ -786,13 +787,18 @@ END
                                                sponge KRAKEN2_${run_name}/${name}.kraken2.log
     # sponge > sudo apt-get install moreutils
     # Test output format
-    tax=`cat KRAKEN2_${run_name}/${name}.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
-         grep -P '\t[DPCOFGS]\t' | sed '0,/D/s//K/' | awk -F'\t' '$4=tolower($4){ print $4"_", $6}' | \
-         sed -E 's/[ ]{1,}/_/g' | tr  "\n" ";" | sed 's/;$/\n/'`
-    echo -e "$i\t$tax" > KRAKEN2_${run_name}/${name}.tax.tsv
+    tax=$(cat KRAKEN2_${run_name}/${name}.kraken2-report.tsv | awk -F'\t' '{if($1>5) print }' | \
+         grep -P '\t[PCOFGS]\t' | awk -F'\t' '$4=tolower($4){ print $4"_", $6}' | \
+         sed -E 's/[ ]{1,}/_/g' | tr  "\n" ";" | sed 's/;$/\n/')
 
+    tax=$(cat KRAKEN2_${run_name}/${name}.kraken2-report.tsv | \
+          awk -F'\t' '{if($1>5) print }' | grep -P '\t[S]\t'| \
+          awk -F'\t' '{ print $6, "#"$1}' | sed -E 's/^ {1,}//; s/[ ]{1,}/_/g' | \
+          rs -TeC | sed 's/_#_/ /g')
+
+    echo -e "${name}\t$tax" > KRAKEN2_${run_name}/${name}.tax.tsv
   done
- #Test
+
   cat KRAKEN2_${run_name}/*tax.tsv | awk 'BEGIN { FS="\t"; OFS="\t" } { $2=$2 "\t" $2 } 1'| \
       sed -e 's/k__/#/; s/s__/#/; s/\(#\).*\(#\)//' | sed -E 's/_S[0-9]{1,}//' | \
       awk -F'\t' -v OFS='\t' '{gsub(";s_"," |",$2);gsub("_"," ",$2)}1' | \
@@ -827,11 +833,13 @@ antibiotics(){
   $docker_cmd ariba ariba getref card card &> /dev/null && \
   $docker_cmd ariba ariba prepareref -f card.fa -m card.tsv card.prepareref &> /dev/null
 
-  for i in $(ls *gz | cut -d\_ -f1,2 | sort | uniq)
+  for r1 in *R1.fastq.gz
   do
+    r2="${r1/R1/R2}"
+    name="${r1%%_R1*}"
     $docker_cmd ariba ariba run /data/card.prepareref \
-                ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_card &> /dev/null && \
-    mv ${i}_card ANTIBIOTICS_$run_name
+                ${r1} ${r2} ${name}_card &> /dev/null && \
+    mv ${name}_card ANTIBIOTICS_$run_name
   done
 
   rm -rf card.* *ARGannot*{bt2,fasta,fai} SRST2.log
@@ -845,15 +853,17 @@ plasmids(){
 
   ln /mnt/disk1/bin/plasmidid_db/plasmid.salmonella.nr100.fna .
 
-  for i in $(ls *gz | grep -v trim | cut -d\_ -f1,2 | sort | uniq)
+  for r1 in *R1.fastq.gz
   do
-    cp ASSEMBLY/$i-idba-assembly.fa $i.fna
+    r2="${r1/R1/R2}"
+    name="${r1%%_R1*}"
+    cp ASSEMBLY/$i-idba-assembly.fa ${name}.fna
     docker run --rm -it -v $(pwd):/data -w /data \
           buisciii/plasmidid plasmidID.sh \
-          -1 ${i}_R1.fastq.gz -2 ${i}_R2.fastq.gz -T $(nproc)\
+          -1 ${r1} -2 ${r2} -T $(nproc)\
           -d plasmid.salmonella.nr100.fna -M $memory\
-          -c $i.fna --no-trim -s $i -g plasmids_${run_name}
-    rm $i.fna
+          -c ${name}.fna --no-trim -s ${name} -g plasmids_${run_name}
+    rm ${name}.fna
   done
   rm plasmid.complete.nr100.fna
 }
