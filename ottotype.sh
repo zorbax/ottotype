@@ -765,14 +765,22 @@ kraken_tax(){
 
   YGGDRASIL=/mnt/disk2/bin/Kraken2/yggdrasil
 
-: <<'END'
-  docker run --rm -it -v $YGGDRASIL:/database -v $(pwd):/workdir \
-        -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/${i}_R1.fastq.gz \
-        -o /workdir/$kraw/$i -db /database/bacteria.ATG \
-        -tax /database/bacteria.name -x &> /dev/null
+  for r1 in *R1.fastq.gz
+  do
+    r2="${r1/R1/R2}"
+    name="${r1%%_R1*}"
 
-  docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data kraken2 kraken2 --help
-END
+    docker run --rm -it -v $YGGDRASIL:/database -v $(pwd):/workdir \
+        -u $(id -u):$(id -g) -w /data kraken2 kraken2 --paired 
+        --gzip-compressed --threads $(nproc) --db $YGGDRASIL  \
+        --report KRAKEN2_${run_name}/${name}.kraken2-report.tsv \
+        ${r1} ${r2} > /dev/null 2> KRAKEN2_${run_name}/${name}.kraken2.log
+  
+  
+
+      
+  done
+
 
   for r1 in *R1.fastq.gz 
   do

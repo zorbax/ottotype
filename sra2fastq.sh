@@ -2,7 +2,11 @@
 
 #PNUSAS_ID/SAMN_ID > SRA ID > FASTQ
 
-list=`cat $1`
+if [ -f "$1" ]; then
+  list=$(cat $1)
+else
+  list=$@
+fi
 
 echo -e "SampleName\tRun\tBioProject\tSample\tBioSample\tScientificName" > pnusas2sra.tsv
 
