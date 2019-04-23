@@ -306,7 +306,7 @@ screen_tax() {
   do
     acc=$(minimap2 -t $(nproc) -x sr $dbNCBI $i 2> /dev/null | \
           awk -F "\t" '$12 > 0 { print }' | cut -f 6 | sort | uniq -c | \
-          sort -nr | head -n 1 | sed 's/^ *//' | cut -d ' ' -f 2)
+          sort -nr | head -1 | sed 's/^ *//' | cut -d ' ' -f 2)
 
     if [ -z "$acc" ]; then
       echo "No match found!"
@@ -847,9 +847,32 @@ antibiotics(){
 }
 
 plasmids(){
+  
+  plasmid_db="/mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna"
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  memory=`awk '{ printf "%.2f", $2/1024 ; exit}' /proc/meminfo | cut -d\. -f1`
+  
+  mkdir PLASMIDS_${run_name}
 
+  for i in *R1.fastq.gz
+  do
+    hit=$(minimap2 -t $(nproc) -x sr $plasmid_db $i -t $(nproc) 2> /dev/null | \
+            awk -F "\t" '$12 > 0 { print }' | cut -f 6 | sort | uniq -c | \
+            sort -nr | head -1 | sed 's/^ *//')
+ 
+    plasmid_acc=$(echo $hit | cut -d ' ' -f2)
+    sample_name=$( echo $i | cut -d\_ -f1,2)
+
+    if [ -z "$plasmid_acc" ]; then
+      echo -e "$sample_name\tNF"
+    else
+      description=$(cat $plasmid_db | grep -m 1 -F $plasmid_acc | \
+                    cut -d ' ' -f1 --complement | tr -d '>')
+      reads=$(echo $hit | cut -d ' ' -f1)
+      echo -e "$sample_name\t$reads\t$plasmid_acc\t$description"
+    fi  
+  done > PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
+
+  memory=`awk '{ printf "%.2f", $2/1024 ; exit}' /proc/meminfo | cut -d\. -f1`
   ln /mnt/disk1/bin/plasmidid_db/plasmid.salmonella.nr100.fna .
 
   for r1 in *R1.fastq.gz
