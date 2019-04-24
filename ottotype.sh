@@ -765,35 +765,20 @@ kraken_tax(){
 
   YGGDRASIL=/mnt/disk2/bin/Kraken2/yggdrasil
 
-  for r1 in *R1.fastq.gz
-  do
-    r2="${r1/R1/R2}"
-    name="${r1%%_R1*}"
-
-    docker run --rm -it -v $YGGDRASIL:/database -v $(pwd):/workdir \
-        -u $(id -u):$(id -g) -w /data kraken2 kraken2 --paired 
-        --gzip-compressed --threads $(nproc) --db $YGGDRASIL  \
-        --report KRAKEN2_${run_name}/${name}.kraken2-report.tsv \
-        ${r1} ${r2} > /dev/null 2> KRAKEN2_${run_name}/${name}.kraken2.log
-  
-  
-
-      
-  done
-
-
   for r1 in *R1.fastq.gz 
   do
     r2="${r1/R1/R2}"
     name="${r1%%_R1*}"
 
     echo "$i"  # --use-mpa-style
-    kraken2 --paired --gzip-compressed --threads $(nproc) \
-      --db $YGGDRASIL --report KRAKEN2_${run_name}/${name}.kraken2-report.tsv \
+    docker run --rm -ir -v $YGGDRASIL:/database -v $(pwd):/data \
+      -u $(id -u):$(id -g) -w /data kraken2 kraken2 --paired \
+      --gzip-compressed --threads $(nproc) --db /database \
+      --report KRAKEN2_${run_name}/${name}.kraken2-report.tsv \
       ${r1} ${r2} > /dev/null 2> KRAKEN2_${run_name}/${name}.kraken2.log
 
-    cat KRAKEN2_${run_name}/${name}.kraken2.log | tail -2 | paste - - | sed "s/^  /${name}\t/" | \
-                                               sponge KRAKEN2_${run_name}/${name}.kraken2.log
+    cat KRAKEN2_${run_name}/${name}.kraken2.log | tail -2 | paste - - | \
+        sed "s/^  /${name}\t/" | sponge KRAKEN2_${run_name}/${name}.kraken2.log
     # rs and sponge > sudo apt-get install moreutils rs
     tax=$(cat KRAKEN2_${run_name}/${name}.kraken2-report.tsv | \
           awk -F'\t' '{if($1>5) print }' | grep -P '\t[S]\t'| \
@@ -873,17 +858,17 @@ plasmids(){
   done > PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
 
   memory=`awk '{ printf "%.2f", $2/1024 ; exit}' /proc/meminfo | cut -d\. -f1`
-  ln /mnt/disk1/bin/plasmidid_db/plasmid.salmonella.nr100.fna .
+  ln /mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna .
 
   for r1 in *R1.fastq.gz
   do
     r2="${r1/R1/R2}"
     name="${r1%%_R1*}"
-    cp ASSEMBLY/$i-idba-assembly.fa ${name}.fna
+    cp ASSEMBLY/$name-idba-assembly.fa ${name}.fna
     docker run --rm -it -v $(pwd):/data -w /data \
-          buisciii/plasmidid plasmidID.sh \
-          -1 ${r1} -2 ${r2} -T $(nproc)\
-          -d plasmid.salmonella.nr100.fna -M $memory\
+      -u $(id -u):$(id -g) plasmidid plasmidID.sh \
+          -1 ${r1} -2 ${r2} -T $(nproc) \
+          -d plasmid.complete.nr100.fna -M $memory \
           -c ${name}.fna --no-trim -s ${name} -g plasmids_${run_name}
     rm ${name}.fna
   done
