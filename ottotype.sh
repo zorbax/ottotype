@@ -835,7 +835,6 @@ plasmids(){
 
   plasmid_db="/mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna"
   run_name=$(basename `pwd` | cut -d\_ -f1)
-
   mkdir PLASMIDS_${run_name}
 
   for i in *R1.fastq.gz
@@ -858,21 +857,40 @@ plasmids(){
   done > PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
 
   memory=`awk '{ printf "%.2f", $2/1024 ; exit}' /proc/meminfo | cut -d\. -f1`
-  ln /mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna .
+  file=PLASMIDS_${run_name}/plasmid_id_NF_${run_name}.tsv
+
+  ln -f /mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna .
 
   for r1 in *R1.fastq.gz
   do
     r2="${r1/R1/R2}"
     name="${r1%%_R1*}"
     cp ASSEMBLY/$name-idba-assembly.fa ${name}.fna
-    docker run --rm -it -v $(pwd):/data -w /data \
-          -u $(id -u):$(id -g) plasmidid plasmidID.sh \
-          -1 ${r1} -2 ${r2} -T $(nproc) \
-          -d /data/plasmid.complete.nr100.fna -M $memory \
-          -c ${name}.fna --no-trim -s ${name} -g plasmids_${run_name}
-    rm ${name}.fna
+    grep -q "$name" PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
+
+    if [ $? -eq 0 ]; then
+      docker run --rm -it -v $(pwd):/data -w /data \
+            -u $(id -u):$(id -g) plasmidid plasmidID.sh \
+            -1 ${r1} -2 ${r2} -T $(nproc) \
+            -d /data/plasmid.complete.nr100.fna -M $memory \
+            -c ${name}.fna --no-trim -s ${name} -g PLASMIDS_${run_name}
+      rm ${name}.fna
+
+      out="PLASMIDS_${run_name}/${name}/images/${name}_summary.png"
+      if [ ! -f "$out" ]; then
+        rm -rf PLASMIDS_${run_name}/${name}
+        echo -e "${name}\tNF" >> $file
+      fi
+    else
+      :
+    fi
   done
+
+  if [ ! -s "$file" ]; then
+    rm $file
+  fi
   rm plasmid.complete.nr100.fna
+
 }
 
 ecoli_type(){
@@ -911,6 +929,38 @@ ecoli_type(){
        --input_pe *fastq.gz --forward R1 --reverse R2 \
        --mlst_db Escherichia_coli#2.fasta --mlst_definitions ecoli_2.txt \
        --mlst_delimiter '_' --threads $(nproc) &> /dev/null
+
+  find . -maxdepth 1 -iname "*results.txt" -type f -exec mv {} SRST2Ec_${run_name} \;
+  rm -f EcOH* LEE* ARG* *tfa SRST2_*.{bam,pileup} Escherichia* ARG* ecoli* *log
+  #mv SRST*log LOGS
+
+  cat SRST2Ec_${run_name}/SRST2_EcOH__fullgenes__EcOH__results.txt | tail -n+2 | \
+     sort -nk 1 | sed -E 's/_S[0-9]{1,}_//; s/_//' | awk -v OFS='\t' '{ print $1, $3, $NF }' | \
+     sed -E 's/\t[A-Z0-9]{1,}.[0-9]{1};/\t/; s/\t/\tGen: /; s/;/: /' | \
+     awk -F'\t' -v OFS='\t' '{x=$1; $1=""; a[x]=a[x]$0 } END { for (x in a) print x,a[x] }' | \
+     sort -nk 1 | sed -E 's/\t{1,}Gen/\nGen/g; s/\t/; /g; s/polyermase/polymerase/' \
+     > RESULTS/srst2Ec_${run_name}_EcOH.tsv
+
+  cat SRST2Ec_${run_name}/SRST2_ARG__genes__ARGannot__results.txt | sed 's/[?*]//g' | \
+     perl -pe 's/\t\-/#/g; s/\#{1,}//g;s/\_[0-9]{1,}//g'| perl -pe 's/_S[0-9]{1,}_//g;
+     s/_//; s/f{3,}/\tFAILED/' | sed "s/''/-/" | tail -n+2 > RESULTS/srst2Ec_${run_name}_argannot.tsv
+
+  translate.py RESULTS/srst2Ec_${run_name}_argannot.tsv RESULTS/antibioticsEc_${run_name}.tsv
+  translate.py RESULTS/srst2Ec_${run_name}_argannot.tsv RESULTS/antibioticsEc_${run_name}_freq.tsv -freq
+
+  cat SRST2Ec_${run_name}/SRST2_Ec1__mlst__Escherichia_coli#1__results.txt | \
+      cut -d$'\t' -f 1-9 | sed 's/[?*]//g; /^$/d' | perl -pe 's/_S[0-9]{1,}_//g;
+      s/_//' | sort | sed 's/ST/ST1/' > SRST2Ec_${run_name}/srst2Ec_${run_name}_achtman#1.tsv
+
+  cat SRST2Ec_${run_name}/SRST2_Ec2__mlst__Escherichia_coli#2__results.txt | \
+      cut -d$'\t' -f 1-9 | sed 's/[?*]//g; /^$/d' | perl -pe 's/_S[0-9]{1,}_//g;
+      s/_//' | sort | sed 's/ST/ST2/' > SRST2Ec_${run_name}/srst2Ec_${run_name}_achtman#2.tsv
+
+  paste SRST2Ec_${run_name}/srst2Ec_${run_name}_achtman#1.tsv \
+      SRST2Ec_${run_name}/srst2Ec_${run_name}_achtman#2.tsv | \
+      awk -v OFS='\t' '$1 == $10 { $10="" ; print}' \
+      > RESULTS/srst12Ec_${run_name}_achtman12.tsv
+  mv SRST2Ec_${run_name} OUTPUT
 }
 
 ####   __  __       _
