@@ -563,7 +563,7 @@ assembly() {
 
     r2="${r1/R1/R2}"
     name="${r1##*/}"; name="${name%%_R1*}"
-    
+
     echo "${name}"
     sga preprocess -q 25 -f 20 --pe-mode=1 ${r1} ${r2} \
         > ${name}_12.t.pp.fq 2> /dev/null
@@ -615,7 +615,7 @@ assembly_spades() {
   mkdir -p ASSEMBLY
   memory=$(awk '{ printf "%.2f", $2/1024/1024 ; exit}' /proc/meminfo | cut -d\. -f1)
 
-  for r1 in *TRIMMING/*R1.trim.fastq.gz 
+  for r1 in *TRIMMING/*R1.trim.fastq.gz
   do
     r2="${r1/R1/R2}"
     name="${r1##*/}"; name="${name%%_R1*}"
@@ -623,13 +623,13 @@ assembly_spades() {
               --pe1-s TRIMMING/1U2U/${name}.1U.trim.fastq.gz \
               --pe1-s TRIMMING/1U2U/${name}.2U.trim.fastq.gz \
               -o ${name}_spades -t $(nproc) -m $memory &>/dev/null
-  
+
   find ${name}_spades -maxdepth 2 -type f -name 'scaffolds.fasta' -exec cp {} ${name}.tmp \;
-  
+
   cat ${name}.tmp | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
        awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' \
        > ASSEMBLY/${name}-spades-assembly.fa
-  
+
   rm -rf ${name}_spades ${name}.tmp
 done
 }
@@ -659,13 +659,13 @@ assembly_stats_cov() {
       awk '{ count++ ; sum += $4 } END { printf "%s\t%.2f\n", "Coverage:", sum/count }')
     cover=`echo $cov | awk '{ print $2 }'`
 
-    cat $i | awk '!/^>/ { 
+    cat $i | awk '!/^>/ {
         printf "%s", $0
         n = "\n"
     } /^>/ {
         print n $0
         n = ""
-    } END { 
+    } END {
         printf "%s", n
     }'| sed '/^>/ d'| awk '{ print length($0) }' | sort -gr > ${name}_contig_lengths.stat
 
@@ -700,7 +700,7 @@ assembly_mlst(){
   run_name=$(basename `pwd` | cut -d\_ -f1)
   mkdir -p ASSEMBLY_MLST_${run_name} OUTPUT RESULTS
   cd ASSEMBLY
-  
+
   for i in *assembly.fa
   do
     mlst --csv $i --threads $(nproc) \
@@ -708,7 +708,7 @@ assembly_mlst(){
   done
 
   cd ..
-  
+
   cat ASSEMBLY_MLST_${run_name}/assembly_mlst_${run_name}.csv | \
       sed 's/-assembly.fa//; s/,/\t/g' | sort | \
       tee OUTPUT/assembly_mlst_${run_name}.tsv \
@@ -763,19 +763,19 @@ kraken_tax(){
   mkdir -p KRAKEN2_${run_name} OUTPUT RESULTS
 
 
-  YGGDRASIL=/mnt/disk2/bin/Kraken2/yggdrasil
+  YGGDRASIL="/mnt/disk2/bin/Kraken2/yggdrasil"
 
-  for r1 in *R1.fastq.gz 
+  for r1 in *R1.fastq.gz
   do
     r2="${r1/R1/R2}"
     name="${r1%%_R1*}"
 
     echo "$i"  # --use-mpa-style
-    docker run --rm -ir -v $YGGDRASIL:/database -v $(pwd):/data \
-      -u $(id -u):$(id -g) -w /data kraken2 kraken2 --paired \
-      --gzip-compressed --threads $(nproc) --db /database \
-      --report KRAKEN2_${run_name}/${name}.kraken2-report.tsv \
-      ${r1} ${r2} > /dev/null 2> KRAKEN2_${run_name}/${name}.kraken2.log
+    docker run --rm -it -v $YGGDRASIL:/database -v $(pwd):/data \
+         -u $(id -u):$(id -g) -w /data kraken2 kraken2 --paired \
+         --gzip-compressed --threads $(nproc) --db /database \
+         --report KRAKEN2_${run_name}/${name}.kraken2-report.tsv \
+         ${r1} ${r2} > /dev/null 2> KRAKEN2_${run_name}/${name}.kraken2.log
 
     cat KRAKEN2_${run_name}/${name}.kraken2.log | tail -2 | paste - - | \
         sed "s/^  /${name}\t/" | sponge KRAKEN2_${run_name}/${name}.kraken2.log
@@ -795,11 +795,11 @@ antibiotics(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
   mkdir -p OUTPUT RESULTS ANTIBIOTICS_$run_name
-  
+
   repo="https://raw.githubusercontent.com/CNRDOGM"
   wget -q -nc $repo/srst2/master/data/ARGannot_r3.fasta
   docker_cmd="docker run --rm -it -v $(pwd):/data -w /data"
-  
+
   $docker_cmd srst2 srst2 --log --output /data/SRST2 --input_pe *fastq.gz \
      --forward R1 --reverse R2 --gene_db ARGannot_r3.fasta --threads $(nproc) &> /dev/null
 
@@ -808,7 +808,7 @@ antibiotics(){
 
   cat ANTIBIOTICS_$run_name/SRST2__genes__ARGannot_r3__results.txt | \
       tail -n +2 | sed 's/[?*]//g' | sed -E 's/_S[0-9]{1,}_//' | \
-      perl -pe "s/\t\-/#/g; s/\#{1,}//g; s/\_[0-9]{1,}//g; s/\'\'/\-/g; 
+      perl -pe "s/\t\-/#/g; s/\#{1,}//g; s/\_[0-9]{1,}//g; s/\'\'/\-/g;
       s/f{3,}//" | sort > RESULTS/antibiotics_${run_name}_argannot.tsv
 
   translate.py RESULTS/antibiotics_${run_name}_argannot.tsv RESULTS/antibiotics_r3_${run_name}.tsv
@@ -832,10 +832,10 @@ antibiotics(){
 }
 
 plasmids(){
-  
+
   plasmid_db="/mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna"
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  
+
   mkdir PLASMIDS_${run_name}
 
   for i in *R1.fastq.gz
@@ -843,7 +843,7 @@ plasmids(){
     hit=$(minimap2 -t $(nproc) -x sr $plasmid_db $i -t $(nproc) 2> /dev/null | \
             awk -F "\t" '$12 > 0 { print }' | cut -f 6 | sort | uniq -c | \
             sort -nr | head -1 | sed 's/^ *//')
- 
+
     plasmid_acc=$(echo $hit | cut -d ' ' -f2)
     sample_name=$( echo $i | cut -d\_ -f1,2)
 
@@ -854,7 +854,7 @@ plasmids(){
                     cut -d ' ' -f1 --complement | tr -d '>')
       reads=$(echo $hit | cut -d ' ' -f1)
       echo -e "$sample_name\t$reads\t$plasmid_acc\t$description"
-    fi  
+    fi
   done > PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
 
   memory=`awk '{ printf "%.2f", $2/1024 ; exit}' /proc/meminfo | cut -d\. -f1`
@@ -866,13 +866,51 @@ plasmids(){
     name="${r1%%_R1*}"
     cp ASSEMBLY/$name-idba-assembly.fa ${name}.fna
     docker run --rm -it -v $(pwd):/data -w /data \
-      -u $(id -u):$(id -g) plasmidid plasmidID.sh \
+          -u $(id -u):$(id -g) plasmidid plasmidID.sh \
           -1 ${r1} -2 ${r2} -T $(nproc) \
-          -d plasmid.complete.nr100.fna -M $memory \
+          -d /data/plasmid.complete.nr100.fna -M $memory \
           -c ${name}.fna --no-trim -s ${name} -g plasmids_${run_name}
     rm ${name}.fna
   done
   rm plasmid.complete.nr100.fna
+}
+
+ecoli_type(){
+
+  run_name=$(basename `pwd` | cut -d\_ -f1)
+  mkdir -p {SRST2Ec_$run_name,OUTPUT,RESULTS}
+
+  repo="https://raw.githubusercontent.com/CNRDOGM"
+  docker_cmd="docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data"
+
+  wget -q -nc $repo/srst2/master/data/EcOH.fasta
+
+  $docker_cmd srst2 srst2 --log --output /data/SRST2_EcOH \
+      --input_pe *fastq.gz --forward R1 --reverse R2 \
+      --gene_db EcOH.fasta --threads $(nproc) &> /dev/null
+
+   wget -q -nc $repo/srst2/master/data/{LEE_mlst.fasta,LEE_profiles.txt}
+   $docker_cmd srst2 srst2 --log --output /data/SRST2_LEE \
+       --input_pe *fastq.gz --forward R1 --reverse R2 \
+       --mlst_db LEE_mlst.fasta --mlst_definitions LEE_profiles.txt \
+       --threads $(nproc) &> /dev/null
+
+  wget -q -nc "$repo/srst2/master/data/ARGannot_r3.fasta" -O ARGannot.fasta
+  $docker_cmd srst2 srst2 --log --output /data/SRST2_ARG \
+       --input_pe *fastq.gz --forward R1 --reverse R2 \
+       --gene_db ARGannot.fasta --threads $(nproc) &> /dev/null
+
+  $docker_cmd srst2 getmlst.py --species "Escherichia coli#1" &> /dev/null && \
+  $docker_cmd srst2 srst2 --log --output /data/SRST2_Ec1 \
+       --input_pe *fastq.gz --forward R1 --reverse R2 \
+       --mlst_db Escherichia_coli#1.fasta --mlst_definitions ecoli.txt \
+       --mlst_delimiter '_' --threads $(nproc) &> /dev/null
+
+  $docker_cmd srst2 getmlst.py --species "Escherichia coli#2" &> /dev/null && \
+  $docker_cmd srst2 srst2 --log --output /data/SRST2_Ec2 \
+       --input_pe *fastq.gz --forward R1 --reverse R2 \
+       --mlst_db Escherichia_coli#2.fasta --mlst_definitions ecoli_2.txt \
+       --mlst_delimiter '_' --threads $(nproc) &> /dev/null
 }
 
 ####   __  __       _
@@ -983,7 +1021,6 @@ else
   echo "Antibiotics"
   antibiotics
   cd ..
-
 fi
 
 run_name=$(basename `pwd` | cut -d\_ -f1)
