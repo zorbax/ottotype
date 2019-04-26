@@ -963,6 +963,8 @@ ecoli_type(){
   mv SRST2Ec_${run_name} OUTPUT
 }
 
+lis_type(){}
+
 ####   __  __       _
 ####  |  \/  | __ _(_)_ __
 ####  | |\/| |/ _` | | '_ \
@@ -1045,33 +1047,33 @@ if [ -s "nosalm_id_ncbi.txt" ]; then
   file="nosalm_id_ncbi.txt"
 else
   file="nosalm_id.txt"
-
-  mkdir -p OTHERS
-
-  while read -r fastq
-  do
-    find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/OTHERS/*" \
-        -print0 | xargs -0 mv -t "$PWD/OTHERS" 2>/dev/null
-  done < <(cat $file | cut -f1)
-
-  cd OTHERS
-
-  echo "Trimming"
-  trimming
-  echo "Assembly"
-  assembly
-  echo "Assembly stats"
-  assembly_stats_cov
-  echo "Assembly mlst"
-  assembly_mlst
-  echo "Kmerfinder"
-  kmer_finder
-  echo "Kraken"
-  kraken_tax
-  echo "Antibiotics"
-  antibiotics
-  cd ..
 fi
+
+mkdir -p OTHERS
+
+while read -r fastq
+do
+  find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/OTHERS/*" \
+      -print0 | xargs -0 mv -t "$PWD/OTHERS" 2>/dev/null
+done < <(cat $file | cut -f1)
+
+cd OTHERS
+
+echo "Trimming"
+trimming
+echo "Assembly"
+assembly
+echo "Assembly stats"
+assembly_stats_cov
+echo "Assembly mlst"
+assembly_mlst
+echo "Kmerfinder"
+kmer_finder
+echo "Kraken"
+kraken_tax
+echo "Antibiotics"
+antibiotics
+cd ..
 
 run_name=$(basename `pwd` | cut -d\_ -f1)
 path_results=`find . -type d -name RESULTS`
