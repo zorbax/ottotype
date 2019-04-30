@@ -242,13 +242,8 @@ checklist(){
 
 clean() {
   find -maxdepth 1 -name "*fastq.gz" -type f -or -type l | rename 's/_L001//; s/_001//;
-                          s/_1.fastq/_R1.fastq/ ; s/_2.fastq/_R2.fastq/'
-  for i in *fastq.gz
-  do
-    if  [[ $i == SRR* ]] || [[ $i == ERR* ]] || [[ $i == DRR* ]]; then
-      rename "s/_R([12])/_S01_R$1/" $i
-    fi
-  done
+                          s/_1.fastq/_S01_R1.fastq/ ; s/_2.fastq/_S01_R2.fastq/'
+
   echo -e "\n\n# The filenames were renamed with the ${FUNCNAME[0]} function" &>> $log_file
 }
 
@@ -612,25 +607,32 @@ assembly() {
 }
 
 assembly_spades() {
-  mkdir -p ASSEMBLY
-  memory=$(awk '{ printf "%.2f", $2/1024/1024 ; exit}' /proc/meminfo | cut -d\. -f1)
 
-  for r1 in *TRIMMING/*R1.trim.fastq.gz
-  do
-    r2="${r1/R1/R2}"
-    name="${r1##*/}"; name="${name%%_R1*}"
-    spades.py --pe1-1 $r1 --pe1-2 $r2 \
-              --pe1-s TRIMMING/1U2U/${name}.1U.trim.fastq.gz \
-              --pe1-s TRIMMING/1U2U/${name}.2U.trim.fastq.gz \
-              -o ${name}_spades -t $(nproc) -m $memory &>/dev/null
+mkdir -p ASSEMBLY
+memory=$(awk '{ printf "%.2f", $2/1024/1024 ; exit}' /proc/meminfo | cut -d\. -f1)
 
-  find ${name}_spades -maxdepth 2 -type f -name 'scaffolds.fasta' -exec cp {} ${name}.tmp \;
+for r1 in *TRIMMING/*R1.trim.fastq.gz
+do
+  r2="${r1/R1/R2}"
+  name="${r1##*/}"; name="${name%%_R1*}"
+  spades.py --pe1-1 $r1 --pe1-2 $r2 \
+            --pe1-s TRIMMING/1U2U/${name}.1U.trim.fastq.gz \
+            --pe1-s TRIMMING/1U2U/${name}.2U.trim.fastq.gz \
+            -o ${name}_spades -t $(nproc) -m $memory &>/dev/null
 
-  cat ${name}.tmp | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
-       awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' \
-       > ASSEMBLY/${name}-spades-assembly.fa
+  if [ $? != 0 ]; then
+    cp ${name}/contig.fa ${name}-spades-assembly.fa
+  else
+    cp ${name}/scaffolds.fasta ${name}-spades-assembly.fa
+  fi
 
-  rm -rf ${name}_spades ${name}.tmp
+find ${name}_spades -maxdepth 2 -type f -name 'scaffolds.fasta' -exec cp {} ${name}.tmp \;
+
+cat ${name}.tmp | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
+     awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' \
+     > ASSEMBLY/${name}-spades-assembly.fa
+
+rm -rf ${name}_spades ${name}.tmp
 done
 }
 
