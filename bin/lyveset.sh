@@ -141,11 +141,11 @@ else
     do
       echo "Trimming $i"
       trimmomatic PE -phred33 -threads $(nproc) ${i}_R1.fastq.gz ${i}_R2.fastq.gz \
-          {i}_R1.trim.fastq.gz $i.1U.trim.gz  ${i}_R2.trim.fastq.gz $i.2U.trim.gz \
+          ${i}_R1.trim.fastq.gz ${i}.1U.trim.gz  ${i}_R2.trim.fastq.gz ${i}.2U.trim.gz \
           SLIDINGWINDOW:5:20 MINLEN:70 &> /dev/null
       echo "Combo"
       paste <(zcat ${i}_R1.trim.fastq.gz ) <(zcat ${i}_R2.trim.fastq.gz) | \
-         paste - - - - | awk -v OFS="\n" -v FS="\t" '{ print $1, $3, $5, $7,
+         paste - - - - | awk -v OFS="\n" -v FS="\t" '{ print $1, $3, $5, $7, \
          $2, $4, $6, $8 }' | pigz --best --processes $(nproc) > ${i}_combo.fastq.gz
       rm *trim*
       echo "TrimClean"
