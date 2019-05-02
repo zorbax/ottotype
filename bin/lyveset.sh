@@ -165,7 +165,7 @@ else
   set_manage.pl set_$(basename `pwd`) --change-reference "$reference"
   echo "Set"
   launch_set.pl set_$(basename `pwd`) -ref "$reference" --min_coverage 20 \
-               --min_alt_frac 0.95 --allowedFlanking 5 --mask-phages \
+               --min_alt_frac 0.95 --allowedFlanking 5 --mask-phages 1 \
                --numcpus $(nproc) &>/dev/null
   echo "DONE"
 fi

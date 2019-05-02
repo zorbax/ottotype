@@ -136,7 +136,7 @@ do
 done
 
 if [ ! -s "$file" ]; then
-  rm $file
+  rm -f $file 2> /dev/null
 fi
 
 rm plasmid.complete.nr100.fna
