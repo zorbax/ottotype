@@ -534,7 +534,7 @@ run_salmonella() {
 
 trimming() {
 
-  mkdir -p $PWD/TRIMMING/1U2U
+  mkdir -p TRIMMING/1U2U
   for r1 in *R1.fastq.gz
   do
     r2=${r1/R1/R2}
@@ -545,7 +545,7 @@ trimming() {
               SLIDINGWINDOW:4:20 MINLEN:70 &> ${name}.trim.log
 
     if [ $? -eq 0 ]; then
-        rm $i.trim.log
+      rm *trim.log
     fi
   done
 }
@@ -554,7 +554,7 @@ assembly() {
 
   for r1 in TRIMMING/*R1.trim.fastq.gz
   do
-    mkdir -p $PWD/ASSEMBLY
+    mkdir -p ASSEMBLY
 
     r2="${r1/R1/R2}"
     name="${r1##*/}"; name="${name%%_R1*}"
@@ -601,7 +601,7 @@ assembly() {
 
     cat ${name}-idba-assembly.fa | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
          awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' \
-         > $PWD/ASSEMBLY/${name}-idba-assembly.fa
+         > ASSEMBLY/${name}-idba-assembly.fa
     rm ${name}-idba-assembly.fa
   done
 }
@@ -611,7 +611,7 @@ assembly_spades() {
 mkdir -p ASSEMBLY
 memory=$(awk '{ printf "%.2f", $2/1024/1024 ; exit}' /proc/meminfo | cut -d\. -f1)
 
-for r1 in *TRIMMING/*R1.trim.fastq.gz
+for r1 in TRIMMING/*R1.trim.fastq.gz
 do
   r2="${r1/R1/R2}"
   name="${r1##*/}"; name="${name%%_R1*}"
@@ -639,11 +639,11 @@ done
 assembly_stats_cov() {
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir -p OUTPUT $PWD/ASSEMBLY/Stats RESULTS
+  mkdir -p OUTPUT ASSEMBLY/Stats RESULTS
   echo -e "Assembly\tNumber_of_contigs\tCoverage\tAssembly_size\tLargest_contig\tN50\tN90" \
       > assembly_$run_name.stats
 
-  for i in $PWD/ASSEMBLY/*assembly.fa
+  for i in ASSEMBLY/*assembly.fa
   do
     assembly=ASSEMBLY/$(basename "$i" | cut -d\- -f3 --complement)
     name=`echo $assembly | cut -d\/ -f2`
@@ -695,7 +695,7 @@ assembly_stats_cov() {
         >> assembly_$run_name.stats
     find . -maxdepth 1 -type f \( -name "*.bam" -o -name "*.bai" \) -exec rm {} \;
   done
-  mv assembly_$run_name.stats $PWD/OUTPUT && cp $PWD/OUTPUT/assembly_$run_name.stats $PWD/RESULTS
+  mv assembly_$run_name.stats OUTPUT/ && cp OUTPUT/assembly_$run_name.stats RESULTS/
 }
 
 assembly_mlst(){
@@ -763,7 +763,6 @@ kraken_tax(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
   mkdir -p KRAKEN2_${run_name} OUTPUT RESULTS
-
 
   YGGDRASIL="/mnt/disk2/bin/Kraken2/yggdrasil"
 
@@ -965,7 +964,7 @@ ecoli_type(){
   mv SRST2Ec_${run_name} OUTPUT
 }
 
-lis_type(){}
+#lis_type(){}
 
 ####   __  __       _
 ####  |  \/  | __ _(_)_ __
@@ -1078,7 +1077,7 @@ antibiotics
 cd ..
 
 run_name=$(basename `pwd` | cut -d\_ -f1)
-path_results=`find . -type d -name RESULTS`
+path_results=`find . -type d -name "RESULTS"`
 mkdir RESULTS_${run_name}
 
 for i in $path_results
