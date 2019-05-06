@@ -72,7 +72,7 @@ error(){
   exit "${code}"
 }
 
-mkdir -p $PWD/log
+mkdir -p log
 log_file=log/ottotype.log
 if [ -f $log_file ];then
   rm -f $log_file
@@ -115,13 +115,13 @@ EOF
 }
 
 check_connection(){
-  echo -e "Network Status\n" &>> $log_file
+  echo -e "\nNetwork Status\n" &>> $log_file
   adress=$(ip r | grep default | cut -d ' ' -f 3)
   up=$(ping -q -w 1 -c 1 "$adress" > /dev/null && echo ok || echo error)
   if [ "$up" == "ok" ]; then
-    echo -e "SESSION_TYPE=local\n" &>> $log_file
+    echo -e "\nSESSION_TYPE = local\n" &>> $log_file
   elif [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-    echo -e "SESSION_TYPE=remote/ssh\n" &>> $log_file
+    echo -e "\nSESSION_TYPE = remote/ssh\n" &>> $log_file
   else
     echo -e "Network Error, please check your internet connection\n" &>> $log_file
     exit 1
@@ -236,7 +236,7 @@ checklist(){
   check_dependencies salmonella.py minimap2 translate.py trimmomatic \
       sga Rscript idba_ud500 idba_ud spades.py bwa \
       samtools mlst kraken2 bioawk &>> $log_file # || error ${LINENO} $(basename $0)
-  check_dockers seqsero srst2 ariba &>> $log_file  # || error ${LINENO} $(basename $0)
+  check_dockers seqsero srst2 ariba kraken2 kmerfinder &>> $log_file  # || error ${LINENO} $(basename $0)
   check_databases &>> $log_file  # || error ${LINENO} $(basename $0)
 }
 
@@ -280,7 +280,7 @@ small_samples() {
     for i in $(cat small_samples/small_samples_size.txt | cut -d\: -f1 | sort | uniq)
     do
       echo -e "${i}\t$(zcat ${i}*R1.fastq.gz | awk 'NR%4==1' | wc -l )"
-      mv -i ${i}_R*.fastq.gz $PWD/small_samples
+      mv -i ${i}_R*.fastq.gz small_samples/
     done #&>> $log_file
   fi
 }
@@ -345,7 +345,7 @@ run_salmonella() {
 
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
   docker_cmd="docker run --rm -it -v $(pwd):/data -w /data"
-  mkdir -p SEQSERO_$run_name OUTPUT RESULTS
+  mkdir -p SEQSERO_${run_name} OUTPUT RESULTS
 
   if [ -z $file ]; then
     file="salm_id.txt"
@@ -357,14 +357,14 @@ run_salmonella() {
       R1=`ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R1/) { print $1 }'`
       R2=`ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R2/) { print $1 }'`
       $docker_cmd seqsero SeqSero.py -m 2 -i $R1 $R2 &> /dev/null && \
-      mv SeqSero_result* SEQSERO_$run_name
+      mv SeqSero_result* SEQSERO_${run_name}
     else
       $docker_cmd seqsero SeqSero.py -m 2 -i ${i}_R1.fastq.gz ${i}_R2.fastq.gz \
-          &> /dev/null && mv SeqSero_result* SEQSERO_$run_name
+          &> /dev/null && mv SeqSero_result* SEQSERO_${run_name}
     fi
   done
 
-  find SEQSERO_$run_name -type f -name '*_result.txt' -exec cat {} \
+  find SEQSERO_${run_name} -type f -name '*_result.txt' -exec cat {} \
                  > OUTPUT/seqsero_${run_name}_serotype.txt \;
 
   cat OUTPUT/seqsero_${run_name}_serotype.txt | grep \: | grep -v "^\*\|^Sdf" | \
@@ -384,7 +384,7 @@ run_salmonella() {
 
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
 
-  mkdir -p SRST2_$run_name
+  mkdir -p SRST2_${run_name}
 
   $docker_cmd srst2 getmlst.py --species "Salmonella" &> /dev/null
 
@@ -401,9 +401,9 @@ run_salmonella() {
       --gene_db ARGannot.fasta --threads $(nproc) &> /dev/null
 
   find . -maxdepth 1 -name "SRST2_*" -type f -not -path "SRST2_$run_name/*" \
-      -exec mv {} SRST2_$run_name/ \;
+      -exec mv {} SRST2_${run_name}/ \;
 
-  cp SRST2_$run_name/SRST2__compiledResults.txt OUTPUT/srst2_${run_name}_compiledResults.txt
+  cp SRST2_${run_name}/SRST2__compiledResults.txt OUTPUT/srst2_${run_name}_compiledResults.txt
 
   rm -f senterica.txt *tfa Salmonella* mlst* ARG* *bt2 *fai SRST2.log
 
@@ -458,7 +458,7 @@ run_salmonella() {
   echo "SRST2: DONE"
 
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
-  mkdir ARIBA_$run_name
+  mkdir ARIBA_${run_name}
 
   $docker_cmd ariba ariba pubmlstget "Salmonella enterica" Salmonella &> /dev/null && \
   $docker_cmd ariba ariba getref card card &> /dev/null && \
@@ -480,7 +480,7 @@ run_salmonella() {
 
   rm -rf Salmonella card.*
 
-  cd ARIBA_$run_name
+  cd ARIBA_${run_name}
   for i in *ariba
   do
     cd $i
@@ -488,8 +488,6 @@ run_salmonella() {
     if [ -e "mlst_report.tsv" ]; then
       cat mlst_report.tsv | tail -n+2 | awk -v var="$id" -v OFS='\t' '{ print var, $0}' | \
       sed 's/[*?]//g' | sort
-      cd ..
-    else
       cd ..
     fi
   done > ../OUTPUT/ariba_${run_name}_achtman.tsv && cd ..
@@ -571,7 +569,7 @@ assembly() {
           > ${name}.index.out 2> ${name}.index.err
       sga correct -t $(nproc) ${name}_12.t.pp.fq -o ${name}_12.t.pp.ec.fq \
           > ${name}.correct.out 2> ${name}.correct.err
-    elsie
+    else
       sga index -t $(nproc) -a sais ${name}_12.t.pp.fq \
           > ${name}.index.out 2> ${name}.index.err
       sga correct -t $(nproc) ${name}_12.t.pp.fq -o ${name}_12.t.pp.ec.fq \
@@ -652,24 +650,18 @@ assembly_stats_cov() {
     echo -e "Assembly:\t${name}" | tee ${name}.stats
     bwa index -a bwtsw $i -p ${name} &> /dev/null
     bwa mem -t $(nproc) ${name} $reads\_R1.trim.fastq.gz $reads\_R2.trim.fastq.gz \
-         2> /dev/null | samtools view -Sb -F4 -@ $(nproc) - | \
+         2> /dev/null | samtools view -Sb -F4 - | \
          samtools sort -@ $(nproc) - -o ${name}.mapped.sorted.bam 2>/dev/null
-    samtools index -@ $(nproc) ${name}.mapped.sorted.bam
+    samtools index ${name}.mapped.sorted.bam
     rm ${name}.{bwt,pac,ann,amb,sa}
 
     cov=$(samtools mpileup ${name}.mapped.sorted.bam 2> /dev/null | \
       awk '{ count++ ; sum += $4 } END { printf "%s\t%.2f\n", "Coverage:", sum/count }')
     cover=`echo $cov | awk '{ print $2 }'`
 
-    cat $i | awk '!/^>/ {
-        printf "%s", $0
-        n = "\n"
-    } /^>/ {
-        print n $0
-        n = ""
-    } END {
-        printf "%s", n
-    }'| sed '/^>/ d'| awk '{ print length($0) }' | sort -gr > ${name}_contig_lengths.stat
+    cat $i | awk '!/^>/ { printf "%s", $0 n = "\n" } /^>/
+      { print n $0 n = "" } END { printf "%s", n }'| \
+      sed '/^>/ d'| awk '{ print length($0) }' | sort -gr > ${name}_contig_lengths.stat
 
     contigs_number=$(cat ${name}_contig_lengths.stat | wc -l)
     assembly_size=$(paste -sd+ ${name}_contig_lengths.stat | bc)
@@ -991,8 +983,8 @@ if [ -s "salm_id.txt" ]; then
 
   while read -r fastq
   do
-    find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/SALMONELLA/*" \
-        -print0 | xargs -0 mv -t "$PWD/SALMONELLA" 2>/dev/null
+    find . -name "$fastq*fastq.gz" -type f -not -path "SALMONELLA/*" \
+        -print0 | xargs -0 mv -t "SALMONELLA/" 2>/dev/null
   done < <(cat salm_id.txt | cut -f1)
 
   cd SALMONELLA
@@ -1018,8 +1010,8 @@ if [ -s "salm-like.txt" ]; then
 
   while read -r fastq
   do
-    find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/SALM-LIKE/*" \
-        -print0 | xargs -0 mv -t "$PWD/SALM-LIKE" 2>/dev/null
+    find . -name "$fastq*fastq.gz" -type f -not -path "SALM-LIKE/*" \
+        -print0 | xargs -0 mv -t "SALM-LIKE/" 2>/dev/null
   done < <(cat salm-like.txt | cut -f1)
 
   cd SALM-LIKE
@@ -1054,8 +1046,8 @@ mkdir -p OTHERS
 
 while read -r fastq
 do
-  find . -name "$fastq*fastq.gz" -type f -not -path "$PWD/OTHERS/*" \
-      -print0 | xargs -0 mv -t "$PWD/OTHERS" 2>/dev/null
+  find . -name "$fastq*fastq.gz" -type f -not -path "OTHERS/*" \
+      -print0 | xargs -0 mv -t "OTHERS/" 2>/dev/null
 done < <(cat $file | cut -f1)
 
 cd OTHERS
