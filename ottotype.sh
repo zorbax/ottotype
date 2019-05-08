@@ -464,19 +464,16 @@ run_salmonella() {
   $docker_cmd ariba ariba getref card card &> /dev/null && \
   $docker_cmd ariba ariba prepareref -f card.fa -m card.tsv card.prepareref &> /dev/null
 
-  if [ -z $file ]; then
-    file="salm_id.txt"
-    for i in $(cat $file | cut -f1)
-    do
-      $docker_cmd ariba ariba run /data/Salmonella/ref_db \
-                  ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_ariba &> /dev/null && \
-      mv ${i}_ariba ARIBA_${run_name}
+  for i in $(cat $file | cut -f1)
+  do
+    $docker_cmd ariba ariba run /data/Salmonella/ref_db \
+                ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_ariba &> /dev/null && \
+    mv ${i}_ariba ARIBA_${run_name}
 
-      $docker_cmd ariba ariba run /data/card.prepareref \
-                  ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_card &> /dev/null && \
-      mv ${i}_card ARIBA_${run_name}
-    done
-  fi
+    $docker_cmd ariba ariba run /data/card.prepareref \
+                ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_card &> /dev/null && \
+    mv ${i}_card ARIBA_${run_name}
+  done
 
   rm -rf Salmonella card.*
 
