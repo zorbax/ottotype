@@ -476,8 +476,8 @@ run_salmonella() {
   done
 
   rm -rf Salmonella card.*
-
   cd ARIBA_${run_name}
+
   for i in *ariba
   do
     cd $i
