@@ -3,20 +3,39 @@
 kmer_finder(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir -p kmerfinder\_$run_name RESULTS/
+  mkdir -p KMERFINDER_${run_name}/{raw,genome}_${run_name} RESULTS/
 
-  DB="/mnt/disk1/bin/kmerfinder_DB/bacteria.organisms.ATGAC"
+  KmerFinder_DB=/mnt/disk1/bin/KmerFinder_DB
+  kraw="KMERFINDER_$run_name/raw_$run_name"
+  kgenome="KMERFINDER_$run_name/genome_$run_name"
 
-  for i in $PWD/ASSEMBLY/*assembly.fa
+  for r1 in *R1.fastq.gz
   do
-    genome_name=`basename $i | cut -d\- -f1`
-    findTemplate -i $i -t $DB -x ATGAC -w -o kmerfinder\_$run_name/$genome_name.kmer
+    name="${r1%%_R1*}"
+    docker run --rm -it -v $KmerFinder_DB:/database -v $(pwd):/workdir \
+          -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/${r1} \
+          -o /workdir/$kraw/${name} -db /database/bacteria.ATG \
+          -tax /database/bacteria.name -x &> /dev/null
   done
 
-  for i in kmerfinder\_$run_name/*kmer
+  for i in ASSEMBLY/*assembly.fa
   do
-    echo $i | cut -d\/ -f2 | cut -d\_ -f1
-    cat $i | tail -n+2 | head -4 | awk -F'\t' -v OFS='\t' '{ print $1, $2, $5 }' | \
-        sed 's/ //g; s/_/#/; s/\t/\&\t/; s/_.*&//; s/#/ /'
-  done > RESULTS/kmerfinder\_$run_name\_all.txt
+    genome_name="${i##*/}"; name="${name%%-*}"
+    echo $genome_name
+    docker run --rm -it -v $KmerFinder_DB:/database -v $(pwd):/workdir \
+          -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/$i \
+          -o /workdir/$kgenome/$genome_name -db /database/bacteria.ATG \
+          -tax /database/bacteria.name -x &> /dev/null
+  done
+
+  for i in *R1.fastq.gz
+  do
+    name="${i%%_R1*}"
+    echo "# RAW_${name}"
+    cat $kraw/${name}/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
+    echo
+    echo "# GENOME_${name}"
+    cat $kgenome/${name}/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
+    echo
+  done > RESULTS/kmerfinder_${run_name}.txt
 }
