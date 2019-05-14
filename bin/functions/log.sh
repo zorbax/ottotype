@@ -6,7 +6,7 @@ tm() {
   local command="$@"
   $@
   rc=$?
-  local R=$[$(date +%s)-$T]
+  local R=$(($(date +%s)-$T))
   local D=$((R/60/60/24))
   local H=$((R/60/60%24))
   local M=$((R/60%60))
