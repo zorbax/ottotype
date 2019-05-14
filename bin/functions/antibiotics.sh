@@ -3,29 +3,42 @@
 antibiotics(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir -p OUTPUT RESULTS
+  mkdir -p OUTPUT RESULTS ANTIBIOTICS_$run_name
 
-  wget -q -nc https://raw.githubusercontent.com/CNRDOGM/bin/master/srst2/data/ARGannot.fasta
-  docker run --rm -it -v $(pwd):/data -w /data srst2 srst2 --log --output /data/SRST2 --input_pe *fastq.gz \
-                        --forward R1 --reverse R2 --gene_db ARGannot.fasta --threads $(nproc) &> /dev/null
-  cat SRST2__genes__ARGannot__results.txt | tail -n +2 | sed 's/[?*]//g' | sed -E 's/_S[0-9]{1,}_//' | \
-          perl -pe "s/\t\-/#/g; s/\#{1,}//g; s/\_[0-9]{1,}//g; s/\'\'/\-/g" | tail -n+2 | sort \
-          > $PWD/RESULTS/srst2_$run_name\_argannot.tsv
-  mv SRST2_*genes__ARGannot__results.txt $PWD/OUTPUT
+  repo="https://raw.githubusercontent.com/CNRDOGM"
+  wget -q -nc $repo/srst2/master/data/ARGannot_r3.fasta
+  docker_cmd="docker run --rm -it -v $(pwd):/data -w /data"
 
-  translate.py $PWD/RESULTS/srst2_$run_name\_argannot.tsv $PWD/RESULTS/antibiotics_$run_name.tsv
-  translate.py $PWD/RESULTS/srst2_$run_name\_argannot.tsv $PWD/RESULTS/antibiotics_$run_name\_freq.tsv -freq
+  $docker_cmd srst2 srst2 --log --output /data/SRST2 --input_pe *fastq.gz \
+            --forward R1 --reverse R2 --gene_db ARGannot_r3.fasta \
+            --threads $(nproc) &> /dev/null
 
-  docker run --rm -it -v $(pwd):/data ariba ariba getref card card &> /dev/null && \
-  docker run --rm -it -v $(pwd):/data ariba ariba prepareref -f card.fa -m card.tsv card.prepareref &> /dev/null
+  find . -maxdepth 1 -name "SRST2_*" -type f -not -path "ANTIBIOTICS_$run_name/*" \
+      -exec mv {} ANTIBIOTICS_$run_name/ \;
 
-  mkdir -p ariba\_$run_name
-  for i in $(ls *gz | grep -v trim | cut -d\_ -f1,2 | sort | uniq)
+  cat ANTIBIOTICS_$run_name/SRST2__genes__ARGannot_r3__results.txt | \
+      tail -n +2 | sed 's/[?*]//g' | sed -E 's/_S[0-9]{1,}_//' | \
+      perl -pe "s/\t\-/#/g; s/\#{1,}//g; s/\_[0-9]{1,}//g; s/\'\'/\-/g;
+      s/f{3,}//" | sort > RESULTS/antibiotics_${run_name}_argannot.tsv
+
+  translate.py RESULTS/antibiotics_${run_name}_argannot.tsv \
+               RESULTS/antibiotics_r3_${run_name}.tsv
+  translate.py RESULTS/antibiotics_${run_name}_argannot.tsv \
+               RESULTS/antibiotics_r3_${run_name}_freq.tsv -freq
+
+  $docker_cmd ariba ariba getref card card &> /dev/null && \
+  $docker_cmd ariba ariba prepareref -f card.fa -m card.tsv card.prepareref &> /dev/null
+
+  for r1 in *R1.fastq.gz
   do
-    docker run --rm -it -v $(pwd):/data -w /data ariba ariba run /data/card.prepareref \
-                             $i\_R1.fastq.gz $i\_R2.fastq.gz $i\_card &> /dev/null && \
-    mv $i\_card ariba\_$run_name
+    r2="${r1/R1/R2}"
+    name="${r1%%_R1*}"
+    $docker_cmd ariba ariba run /data/card.prepareref \
+                ${r1} ${r2} ${name}_card &> /dev/null && \
+    mv ${name}_card ANTIBIOTICS_$run_name
   done
 
-  rm -rf card.* *ARGannot*{bam,pileup,bt2,fasta,fai}
+  rm -rf card.* *ARGannot*{bt2,fasta,fai} SRST2.log
+  $docker_cmd ariba ariba summary --preset all out.summary \
+          $(find ARIBA_PIPELINE/ -type f -name report.tsv -printf "%p ")
 }
