@@ -730,10 +730,11 @@ kmer_finder(){
   for i in ASSEMBLY/*assembly.fa
   do
     genome_name="${i##*/}"; name="${name%%-*}"
-    docker run --rm -it -v $KmerFinder_DB:/database -v $(pwd):/workdir \
-          -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/$i \
-          -o /workdir/$kgenome/$genome_name -db /database/bacteria.ATG \
-          -tax /database/bacteria.name -x &> /dev/null
+    echo $genome_name
+    #docker run --rm -it -v $KmerFinder_DB:/database -v $(pwd):/workdir \
+    #      -u $(id -u):$(id -g) -w /data kmerfinder -i /workdir/$i \
+    #      -o /workdir/$kgenome/$genome_name -db /database/bacteria.ATG \
+    #      -tax /database/bacteria.name -x &> /dev/null
   done
 
   for i in *R1.fastq.gz
