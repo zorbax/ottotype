@@ -1,9 +1,9 @@
 #!/bin/bashrc
 
-ecoli_typing(){
+ecoli_type(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir -p {SRST2Ec_${run_name},OUTPUT,RESULTS}
+  mkdir -p {SRST2Ec_$run_name,OUTPUT,RESULTS}
 
   repo="https://raw.githubusercontent.com/CNRDOGM"
   docker_cmd="docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data"
@@ -36,21 +36,21 @@ ecoli_typing(){
        --input_pe *fastq.gz --forward R1 --reverse R2 \
        --mlst_db Escherichia_coli#2.fasta --mlst_definitions ecoli_2.txt \
        --mlst_delimiter '_' --threads $(nproc) &> /dev/null
-#>>>
+
   find . -maxdepth 1 -iname "*results.txt" -type f -exec mv {} SRST2Ec_${run_name} \;
   rm -f EcOH* LEE* ARG* *tfa SRST2_*.{bam,pileup} Escherichia* ARG* ecoli* *log
   #mv SRST*log LOGS
 
   cat SRST2Ec_${run_name}/SRST2_EcOH__fullgenes__EcOH__results.txt | tail -n+2 | \
-      sort -nk 1 | sed -E 's/_S[0-9]{1,}_//; s/_//' | awk -v OFS='\t' '{ print $1, $3, $NF }' | \
-      sed -E 's/\t[A-Z0-9]{1,}.[0-9]{1};/\t/; s/\t/\tGen: /; s/;/: /' | \
-      awk -F'\t' -v OFS='\t' '{x=$1; $1=""; a[x]=a[x]$0 } END { for (x in a) print x,a[x] }' | \
-      sort -nk 1 | sed -E 's/\t{1,}Gen/\nGen/g; s/\t/; /g; s/polyermase/polymerase/' \
-      > RESULTS/srst2Ec_${run_name}_EcOH.tsv
+     sort -nk 1 | sed -E 's/_S[0-9]{1,}_//; s/_//' | awk -v OFS='\t' '{ print $1, $3, $NF }' | \
+     sed -E 's/\t[A-Z0-9]{1,}.[0-9]{1};/\t/; s/\t/\tGen: /; s/;/: /' | \
+     awk -F'\t' -v OFS='\t' '{x=$1; $1=""; a[x]=a[x]$0 } END { for (x in a) print x,a[x] }' | \
+     sort -nk 1 | sed -E 's/\t{1,}Gen/\nGen/g; s/\t/; /g; s/polyermase/polymerase/' \
+     > RESULTS/srst2Ec_${run_name}_EcOH.tsv
 
   cat SRST2Ec_${run_name}/SRST2_ARG__genes__ARGannot__results.txt | sed 's/[?*]//g' | \
-      perl -pe 's/\t\-/#/g; s/\#{1,}//g;s/\_[0-9]{1,}//g'| perl -pe 's/_S[0-9]{1,}_//g;
-      s/_//; s/f{3,}/\tFAILED/' | sed "s/''/-/" | tail -n+2 > RESULTS/srst2Ec_${run_name}_argannot.tsv
+     perl -pe 's/\t\-/#/g; s/\#{1,}//g;s/\_[0-9]{1,}//g'| perl -pe 's/_S[0-9]{1,}_//g;
+     s/_//; s/f{3,}/\tFAILED/' | sed "s/''/-/" | tail -n+2 > RESULTS/srst2Ec_${run_name}_argannot.tsv
 
   translate.py RESULTS/srst2Ec_${run_name}_argannot.tsv RESULTS/antibioticsEc_${run_name}.tsv
   translate.py RESULTS/srst2Ec_${run_name}_argannot.tsv RESULTS/antibioticsEc_${run_name}_freq.tsv -freq
@@ -64,24 +64,8 @@ ecoli_typing(){
       s/_//' | sort | sed 's/ST/ST2/' > SRST2Ec_${run_name}/srst2Ec_${run_name}_achtman#2.tsv
 
   paste SRST2Ec_${run_name}/srst2Ec_${run_name}_achtman#1.tsv \
-        SRST2Ec_${run_name}/srst2Ec_${run_name}_achtman#2.tsv | \
-        awk -v OFS='\t' '$1 == $10 { $10="" ; print}' \
-        > RESULTS/srst12Ec_${run_name}_achtman12.tsv
-
+      SRST2Ec_${run_name}/srst2Ec_${run_name}_achtman#2.tsv | \
+      awk -v OFS='\t' '$1 == $10 { $10="" ; print}' \
+      > RESULTS/srst12Ec_${run_name}_achtman12.tsv
   mv SRST2Ec_${run_name} OUTPUT
-
-
-##
-samtools view -H SRST2_Ec1__AI75_S39_.Escherichia_coli#1.sorted.bam| grep "\@SQ" | sed 's/^.*SN://g' | cut -f1 | \
-    xargs -I {} -n 1 -P $(nproc) sh -c "samtools mpileup -BQ0 -d 100000 -uf yourGenome.fa -r {} yourFile.bam"
-
-with open(pileup_file, 'w') as sam_pileup:
-    mpileup_command = [samtools_exec, 'mpileup', '-L', '1000', '-f', fasta,
-           '-Q', str(args.baseq), '-q', str(args.mapq), '-B', out_file_bam_sorted + '.bam']
-    if args.samtools_args:
-      x = args.samtools_args
-      x = x.replace('\\','')
-      mpileup_command += x.split()
-    run_command(mpileup_command, stdout=sam_pileup)
-##
 }

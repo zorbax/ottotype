@@ -2,17 +2,18 @@
 
 trimming() {
 
-  mkdir -p $PWD/TRIMMING/1U2U
-  for i in $(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq )
+  mkdir -p TRIMMING/1U2U
+  for r1 in *R1.fastq.gz
   do
-    trimmomatic PE -phred33 -threads $(nproc) $i\_R1.fastq.gz $i\_R2.fastq.gz \
-       $i\_R1.trim.fastq.gz $i.1U.trim.fastq.gz \
-       $i\_R2.trim.fastq.gz $i.2U.trim.fastq.gz \
-       SLIDINGWINDOW:4:20 MINLEN:70 &> $i.trim.log
-    mv *U.trim.fastq.gz TRIMMING/1U2U && mv *trim*gz TRIMMING
+    r2=${r1/R1/R2}
+    name=${r1%%_R1*}
+    trimmomatic PE -phred33 -threads $(nproc) $r1 $r2 \
+              TRIMMING/${name}_R1.trim.fastq.gz TRIMMING/1U2U/${name}.1U.trim.fastq.gz \
+              TRIMMING/${name}_R2.trim.fastq.gz TRIMMING/1U2U/${name}.2U.trim.fastq.gz \
+              SLIDINGWINDOW:4:20 MINLEN:125 &> ${name}.trim.log
 
     if [ $? -eq 0 ]; then
-        rm $i.trim.log
+      rm *trim.log
     fi
   done
 }
