@@ -24,64 +24,27 @@ source bin/functions/kraken_tax.sh
 source bin/functions/plasmids.sh
 
 T=$(date +%s)
-
-end(){
-
-  echo -e "\n\n========"
-  echo "  DONE"
-  echo -e "========\n\n"
-  R=$(($(date +%s)-$T))
-  D=$((R/60/60/24))
-  H=$((R/60/60%24))
-  M=$((R/60%60))
-  S=$((R%60))
-
-  printf 'CMD-> %s\n' "$0"
-  printf 'RUNTIME-> '
-  (( $D > 0 )) && printf '%d d ' $D
-  (( $H > 0 )) && printf '%d h ' $H
-  (( $M > 0 )) && printf '%d m ' $M
-  (( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
-  printf '%d s\n' $S
-}
-
-mkdir -p log
-log_file=log/ottotype.log
-if [ -f $log_file ];then
-  rm -f $log_file
-fi
-
-cat << EOF > $log_file
-====================================
-Serotyping pipeline from SSB-CNRDOGM
-====================================
-EOF
-
-echo -e "\nLOG FILE OTTOTYPE" >> $log_file
-echo $(date +"%Y-%m-%d %H:%M") >> $log_file
-
 #lis_type(){}
 
-####   __  __       _
-####  |  \/  | __ _(_)_ __
-####  | |\/| |/ _` | | '_ \
-####  | |  | | (_| | | | | |
-####  |_|  |_|\__,_|_|_| |_|
-####
+: <<'END'
+______
+\ \ \ \
+ \ \ \ \
+ / / / /
+/_/_/_/
+
+END
 
 docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi
 run_name=$(basename `pwd` | cut -d\_ -f1)
 
-echo "Clean"
 clean
-echo "Checklist"
 checklist
-echo "Small samples"
 small_samples
-echo "Taxa screening"
 screen_tax
 
 echo "SALMONELLA"
+
 if [ -s "salm_id.txt" ]; then
   mkdir -p SALMONELLA
 
@@ -92,17 +55,11 @@ if [ -s "salm_id.txt" ]; then
   done < <(cat salm_id.txt | cut -f1)
 
   cd SALMONELLA
-
   file="../salm_id.txt"
-  echo "run_salmonella"
   run_salmonella #&>> $log_file || error ${LINENO} $(basename $0)
-  echo "Trimming"
   trimming
-  echo "Assembly"
   assembly_idba
-  echo "Assembly stats"
   assembly_stats_cov
-  echo "Plasmids"
   plasmids
   cd ..
 fi
@@ -119,21 +76,13 @@ if [ -s "salm-like.txt" ]; then
   done < <(cat salm-like.txt | cut -f1)
 
   cd SALM-LIKE
-
   file="../salm-like.txt"
-  echo "run_salmonella"
   run_salmonella
-  echo "trimm"
   trimming
-  echo "assembly"
   assembly_idba
-  echo "stats"
   assembly_stats_cov
-  echo "Assembly mlst"
   assembly_mlst
-  echo "kmerfinder"
   kmer_finder
-  echo "Kraken"
   kraken_tax
   cd ..
 fi
@@ -155,20 +104,12 @@ do
 done < <(cat $file | cut -f1)
 
 cd OTHERS
-
-echo "Trimming"
 trimming
-echo "Assembly"
 assembly_idba
-echo "Assembly stats"
 assembly_stats_cov
-echo "Assembly mlst"
 assembly_mlst
-echo "Kmerfinder"
 kmer_finder
-echo "Kraken"
 kraken_tax
-echo "Antibiotics"
 antibiotics
 cd ..
 
