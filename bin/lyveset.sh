@@ -4,38 +4,58 @@
 
 echo ""
 echo "=============================="
-echo " LyveSET - SSB-CNRDOGM v0.9.2 "
+echo " LyveSET - SSB-CNRDOGM v0.9.4 "
 echo "=============================="
 echo ""
 
 display_usage() {
   echo -e "\nUsage:\n\t$(basename $0) -r reference.fna\n\t$(basename $0) -r reference.fna -d [Docker enabled]\n"
-  }
+}
 
-if [  $# -le 1 ]
-  then
-    display_usage
-    exit 1
-fi
+tempmk(){
+  if [[ -O $PWD/tmp && -d $PWD/tmp ]]; then
+    TMPDIR=$PWD/tmp
+  else
+    rm -rf $PWD/tmp 2> /dev/null
+    mkdir -p $PWD/tmp
+    TMPDIR=$(mktemp -d $PWD/tmp/XXXX)
+  fi
+
+  TMP=$TMPDIR
+  TEMP=$TMPDIR
+  export TMPDIR TMP TEMP
+}
+
+tmprm(){
+  if [ -O $TMPDIR && -d $TMPDIR ]; then
+    rm -rf $TMPDIR/*
+  fi
+}
 
 use_docker=false
+no_ref=false
 
-while getopts ":r:dh" opt
+while getopts ":r:dnh" opt
 do
   case $opt in
     r) reference="$OPTARG"
-       shift
     ;;
     d) use_docker=true
-       shift 2
+    ;;
+    n) no_ref=true
     ;;
     h) display_usage
     ;;
-    \?) echo "Invalid option -$OPTARG" >&2
-        exit 1
+    ?) echo "Invalid option -$OPTARG" >&2
+       exit 1
     ;;
   esac
 done
+
+if [ $OPTIND -eq 1 ]; then
+  display_usage
+  exit 1
+fi
 
 ls *fastq.gz | grep -v SRR | cut -d\_ -f1,2 | sort | uniq > original_names.txt
 #Rename SRR files
@@ -55,6 +75,7 @@ docker_clean() {
 }
 
 if [ $use_docker == true ]; then
+  tempmk
   docker_clean
   if [ ! -d "$dir" ]; then
     $docker_run lyveset set_manage.pl --create set_$(basename `pwd`) 2>/dev/null
@@ -112,15 +133,20 @@ if [ $use_docker == true ]; then
     done
   fi
 
-  echo "Change reference"
-  $docker_run lyveset set_manage.pl set_$(basename `pwd`) --change-reference "$reference"
-  echo "Set"
-  $docker_run lyveset launch_set.pl set_$(basename `pwd`) -ref "$reference" \
-             --min_coverage 20 --min_alt_frac 0.95 --allowedFlanking 5 \
-             --mask-phages 1 --numcpus $(nproc) &>/dev/null
-  rm *cleaned.fastq.gz
+  if [ $no_ref == false ]; then
+    echo "Change reference"
+    $docker_run lyveset set_manage.pl set_$(basename `pwd`) --change-reference "$reference"
+    echo "Set"
+    $docker_run lyveset launch_set.pl set_$(basename `pwd`) -ref "$reference" \
+              --min_coverage 20 --min_alt_frac 0.95 --allowedFlanking 5 \
+              --mask-phages 1 --numcpus $(nproc) &>/dev/null
+    rm *cleaned.fastq.gz
+  fi
+
   echo "DONE"
+  tmprm
 else
+  tempmk
   if [ ! -d "$dir" ]; then
     set_manage.pl --create set_$(basename `pwd`) 2>/dev/null
   fi
@@ -176,22 +202,15 @@ else
     done
   fi
 
-  echo "Change reference"
-  #check if links exist don't add, if not remove all links and link again
-  set_manage.pl set_$(basename `pwd`) --change-reference "$reference"
-  echo "Set"
-  launch_set.pl set_$(basename `pwd`) -ref "$reference" --min_coverage 20 \
-               --min_alt_frac 0.95 --allowedFlanking 5 --mask-phages 1 \
-               --numcpus $(nproc) &>/dev/null
+  if [ $no_ref == false ]; then
+    echo "Change reference"
+    #check if links exist don't add, if not remove all links and link again
+    set_manage.pl set_$(basename `pwd`) --change-reference "$reference"
+    echo "Set"
+    launch_set.pl set_$(basename `pwd`) -ref "$reference" --min_coverage 20 \
+                --min_alt_frac 0.95 --allowedFlanking 5 --mask-phages 1 \
+                --numcpus $(nproc) &>/dev/null
+  fi
   echo "DONE"
+  tmprm
 fi
-
-
-: <<'END'
-if [ $? != 0 ]; then
-  echo "Error"
-  exit 1
-else
-  rm *cleaned.fastq.gz
-fi
-END
