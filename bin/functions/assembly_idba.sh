@@ -12,11 +12,11 @@ assembly_idba(){
     echo "${name}"
     sga preprocess -q 25 -f 20 --pe-mode=1 ${r1} ${r2} \
         > ${name}_12.t.pp.fq 2> /dev/null
-    median=`cat ${name}_12.t.pp.fq | awk 'NR%4==2 { print length }' | head -20000 | \
+    median=$(cat ${name}_12.t.pp.fq | awk 'NR%4==2 { print length }' | head -20000 | \
             Rscript -e 'summary (as.numeric (readLines ("stdin")))' | tail -n+2 | \
-            awk '{ print $3 }'  | cut -d\. -f1`
+            awk '{ print $3 }'  | cut -d\. -f1)
 
-    if [ $median -le 200 ]; then
+    if [[ $median -le 200 ]]; then
       sga index -t $(nproc) -a ropebwt ${name}_12.t.pp.fq \
           > ${name}.index.out 2> ${name}.index.err
       sga correct -t $(nproc) ${name}_12.t.pp.fq -o ${name}_12.t.pp.ec.fq \
@@ -29,9 +29,9 @@ assembly_idba(){
     fi
 
     sed -n '1~4s/^@/>/p;2~4p' ${name}_12.t.pp.ec.fq > ${name}_12.t.pp.ec.fa
-    medianec=`cat ${name}_12.t.pp.ec.fa | awk '$0 !~ /^>/ { print length }' | \
+    medianec=$(cat ${name}_12.t.pp.ec.fa | awk '$0 !~ /^>/ { print length }' | \
               head -20000 | Rscript -e 'summary (as.numeric (readLines ("stdin")))' | \
-              tail -n+2 | awk '{ print $3}'  | cut -d\. -f1`
+              tail -n+2 | awk '{ print $3}'  | cut -d\. -f1)
 
     if [[ $medianec -ge 128 ]]; then
       idba_ud500 -r ${name}_12.t.pp.ec.fa -o ${name} --mink 35 --maxk 249 \
@@ -41,7 +41,7 @@ assembly_idba(){
           --num_threads $(nproc) --min_pairs 2 > /dev/null
     fi
 
-    if [ $? != 0 ]; then
+    if [[ $? != 0 ]]; then
        cp ${name}/contig.fa ${name}-idba-assembly.fa
     else
        cp ${name}/scaffold.fa ${name}-idba-assembly.fa

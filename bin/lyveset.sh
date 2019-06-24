@@ -12,7 +12,7 @@ display_usage() {
   echo -e "\nUsage:\n\t$(basename $0) -r reference.fna\n\t$(basename $0) -r reference.fna -d [Docker enabled]\n"
 }
 
-tempmk(){
+tmpmk(){
   if [[ -O $PWD/tmp && -d $PWD/tmp ]]; then
     TMPDIR=$PWD/tmp
   else
@@ -75,7 +75,7 @@ docker_clean() {
 }
 
 if [ $use_docker == true ]; then
-  tempmk
+  tmpmk
   docker_clean
   if [ ! -d "$dir" ]; then
     $docker_run lyveset set_manage.pl --create set_$(basename `pwd`) 2>/dev/null
@@ -146,7 +146,7 @@ if [ $use_docker == true ]; then
   echo "DONE"
   tmprm
 else
-  tempmk
+  tmpmk
   if [ ! -d "$dir" ]; then
     set_manage.pl --create set_$(basename `pwd`) 2>/dev/null
   fi

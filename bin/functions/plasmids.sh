@@ -25,7 +25,7 @@ plasmids(){
     fi
   done > PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
 
-  memory=`awk '{ printf "%.2f", $2/1024 ; exit}' /proc/meminfo | cut -d\. -f1`
+  memory=$(awk '{ printf "%.2f", $2/1024 ; exit}' /proc/meminfo | cut -d\. -f1)
   file=PLASMIDS_${run_name}/plasmid_id_NF_${run_name}.tsv
 
   ln -f /mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna .

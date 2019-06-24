@@ -16,8 +16,8 @@ run_salmonella() {
   for i in $(cat $file | cut -f1)
   do
     if [[ "find . -type l -name "$i*"" ]]; then
-      R1=`ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R1/) { print $1 }'`
-      R2=`ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R2/) { print $1 }'`
+      R1=$(ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R1/) { print $1 }')
+      R2=$(ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R2/) { print $1 }')
       $docker_cmd seqsero SeqSero.py -m 2 -i $R1 $R2 &> /dev/null && \
       mv SeqSero_result* SEQSERO_${run_name}
     else
@@ -89,8 +89,8 @@ run_salmonella() {
 
   while read line
   do
-    id=`echo $line | cut -d ' ' -f1`
-    st=`echo $line | awk '{ print $2 }'`
+    id=$(echo $line | cut -d ' ' -f1)
+    st=$(echo $line | awk '{ print $2 }')
 
     if [ ! -f "$HOME/bin/Strain_Senterica.tsv" ]; then
       wget -q -nc -O $HOME/bin/Strain_Senterica.tsv https://git.io/fhpbf
@@ -110,8 +110,8 @@ run_salmonella() {
       sed 's/ /\nST:#/; s/ /\neBG:#/; s/ /\nSerotipo:#/; s/#/ /g' \
       > RESULTS/srst2_${run_name}_st02_enterobase.tsv
 
-  id1=`cat RESULTS/srst2_${run_name}_enterobase.tsv | cut -f1 | sort | uniq`
-  id2=`cat RESULTS/null.tsv | cut -f1 | sort | uniq`
+  id1=$(cat RESULTS/srst2_${run_name}_enterobase.tsv | cut -f1 | sort | uniq)
+  id2=$(cat RESULTS/null.tsv | cut -f1 | sort | uniq)
   diff <(echo "$id1") <(echo "$id2") | grep "^\>" \
        > RESULTS/srst2_${run_name}_NF_enterobase.tsv 2>/dev/null
 
@@ -143,7 +143,7 @@ run_salmonella() {
   for i in *ariba
   do
     cd $i
-    id=`echo $i | cut -d\_ -f1`
+    id=$(echo $i | cut -d\_ -f1)
     if [ -e "mlst_report.tsv" ]; then
       cat mlst_report.tsv | tail -n+2 | awk -v var="$id" -v OFS='\t' '{ print var, $0}' | \
       sed 's/[*?]//g' | sort
@@ -155,8 +155,8 @@ run_salmonella() {
 
   while read line
   do
-    id=`echo $line | cut -d ' ' -f1`
-    st=`echo $line | awk '{ print $2 }'`
+    id=$(echo $line | cut -d ' ' -f1)
+    st=$(echo $line | awk '{ print $2 }')
 
     if [ ! -f "$HOME/bin/Strain_Senterica.tsv" ]; then
       wget -q -nc -O $HOME/bin/Strain_Senterica.tsv https://git.io/fhpbf
@@ -176,8 +176,8 @@ run_salmonella() {
       sed 's/ /\nST:#/; s/ /\neBG:#/; s/ /\nSerotipo:#/; s/#/ /g' \
       > RESULTS/ariba_${run_name}_st02_enterobase.tsv
 
-  id1=`cat RESULTS/ariba_${run_name}_enterobase.tsv | cut -f1 | sort | uniq`
-  id2=`cat RESULTS/null.tsv | cut -f1 | sort | uniq`
+  id1=$(cat RESULTS/ariba_${run_name}_enterobase.tsv | cut -f1 | sort | uniq)
+  id2=$(cat RESULTS/null.tsv | cut -f1 | sort | uniq)
   diff <(echo "$id1") <(echo "$id2") | grep "^\>" \
        > RESULTS/ariba_${run_name}_NF_enterobase.tsv 2>/dev/null
 
@@ -186,5 +186,4 @@ run_salmonella() {
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
 
   echo "ARIBA: DONE"
-
 }

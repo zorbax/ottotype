@@ -10,7 +10,7 @@ assembly_stats_cov() {
   for i in ASSEMBLY/*assembly.fa
   do
     assembly=ASSEMBLY/$(basename "$i" | cut -d\- -f3 --complement)
-    name=`echo $assembly | cut -d\/ -f2`
+    name=$(echo $assembly | cut -d\/ -f2)
     reads=TRIMMING/$(basename $i | cut -d\- -f1)
 
     echo -e "Assembly:\t${name}" | tee ${name}.stats
@@ -25,9 +25,9 @@ assembly_stats_cov() {
       awk '{ count++ ; sum += $4 } END { printf "%s\t%.2f\n", "Coverage:", sum/count }')
     cover=`echo $cov | awk '{ print $2 }'`
 
-    cat $i | awk '!/^>/ { printf "%s", $0 n = "\n" } /^>/
-      { print n $0 n = "" } END { printf "%s", n }'| \
-      sed '/^>/ d'| awk '{ print length($0) }' | sort -gr > ${name}_contig_lengths.stat
+    cat $i | awk '!/^>/ { printf "%s", $0; n = "\n" }
+        /^>/ { print n $0; n = "" } END { printf "%s", n }'| \
+        sed '/^>/ d'| awk '{ print length($0) }' | sort -gr > ${name}_contig_lengths.stat
 
     contigs_number=$(cat ${name}_contig_lengths.stat | wc -l)
     assembly_size=$(paste -sd+ ${name}_contig_lengths.stat | bc)

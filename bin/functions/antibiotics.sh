@@ -28,7 +28,7 @@ antibiotics(){
 
   $docker_cmd ariba ariba getref card card &> /dev/null && \
   $docker_cmd ariba ariba prepareref -f card.fa -m card.tsv card.prepareref &> /dev/null
-
+  #megares
   for r1 in *R1.fastq.gz
   do
     r2="${r1/R1/R2}"

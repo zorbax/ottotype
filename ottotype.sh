@@ -14,20 +14,11 @@ do
 done
 
 T=$(date +%s)
-#lis_type(){}
-
-: <<'END'
-______
-\ \ \ \
- \ \ \ \
- / / / /
-/_/_/_/
-
-END
 
 docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi
 run_name=$(basename `pwd` | cut -d\_ -f1)
 
+tmpmk
 echo "Clean"
 clean
 echo "Checklist"
@@ -116,4 +107,5 @@ do
   cp $i/* RESULTS_${run_name}
 done
 
+tmprm
 end &>> $log_file
