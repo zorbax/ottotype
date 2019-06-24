@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+: <<'END'
 #DTU
 mkdir plasmidfinder && mv plasmidfinder.* plasmidfinder
 ariba prepareref -f /home/dell/bin/ariba/virulencefinder.fa -m /home/dell/bin/ariba/virulencefinder.tsv output_directory
@@ -35,3 +35,4 @@ do
 
   ariba run $HOME/bin/ariba/vfdb/vfdb.prepareref $i\_R1.fastq.gz $i\_R2.fastq.gz $name\_virulence_vfdb
 done
+END
