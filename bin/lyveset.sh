@@ -27,7 +27,7 @@ tempmk(){
 }
 
 tmprm(){
-  if [ -O $TMPDIR && -d $TMPDIR ]; then
+  if [[ -O $TMPDIR && -d $TMPDIR ]]; then
     rm -rf $TMPDIR/*
   fi
 }
