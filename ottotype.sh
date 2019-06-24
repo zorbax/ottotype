@@ -38,9 +38,13 @@ END
 docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi
 run_name=$(basename `pwd` | cut -d\_ -f1)
 
+echo "Clean"
 clean
+echo "Checklist"
 checklist
+echo "Small samples"
 small_samples
+echo "Screen tax"
 screen_tax
 
 echo "SALMONELLA"
