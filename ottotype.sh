@@ -7,21 +7,11 @@
 ####  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
 ####
 
-source bin/functions/log.sh
-source bin/functions/check.sh
-source bin/functions/clean.sh
-source bin/functions/small_samples.sh
-source bin/functions/screen_raw_tax.sh
-source bin/functions/salmonella_typing.sh
-source bin/functions/ecoli_typing.sh
-source bin/functions/trimming.sh
-source bin/functions/assembly_idba.sh
-source bin/functions/assembly_spades.sh
-source bin/functions/assembly_stats.sh
-source bin/functions/assembly_mlst.sh
-source bin/functions/antibiotics.sh
-source bin/functions/kraken_tax.sh
-source bin/functions/plasmids.sh
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+for i in $dir/bin/functions/*sh
+do
+  source $i
+done
 
 T=$(date +%s)
 #lis_type(){}
