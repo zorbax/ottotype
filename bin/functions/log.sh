@@ -63,8 +63,8 @@ error(){
   exit "${code}"
 }
 
-mkdir -p log
-log_file=log/ottotype.log
+mkdir -p $PWD/log
+log_file=$PWD/log/ottotype.log
 
 if [ -f $log_file ];then
   rm -f $log_file
