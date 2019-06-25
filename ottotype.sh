@@ -45,6 +45,7 @@ if [ -s "salm_id.txt" ]; then
   trimming
   assembly_idba
   assembly_stats_cov
+  plas_vir_vfdb
   plasmids
   cd ..
 fi
@@ -66,6 +67,7 @@ if [ -s "salm-like.txt" ]; then
   trimming
   assembly_idba
   assembly_stats_cov
+  plas_vir_vfdb
   assembly_mlst
   kmer_finder
   kraken_tax
@@ -92,6 +94,7 @@ cd OTHERS
 trimming
 assembly_idba
 assembly_stats_cov
+plas_vir_vfdb
 assembly_mlst
 kmer_finder
 kraken_tax
