@@ -14,7 +14,6 @@ plas_vir_vfdb(){
   do
     r2="${r1/R1/R2}"
     name="${r1%%_R1*}"
-    echo "$r1 $r2 $name"
     for k in virulencefinder vfdb_full plasmidfinder
     do
       $docker_cmd ariba ariba run /data/${k}.prepareref \

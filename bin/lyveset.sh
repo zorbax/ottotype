@@ -9,7 +9,10 @@ echo "=============================="
 echo ""
 
 display_usage() {
-  echo -e "\nUsage:\n\t$(basename $0) -r reference.fna\n\t$(basename $0) -r reference.fna -d [Docker enabled]\n"
+  echo -e "\nUsage:"
+  echo -e "\t$(basename $0) -r reference.fna"
+  echo -e "\t$(basename $0) -r reference.fna -d [Docker enabled]"
+  echo -e "\t$(basename $0) -n [Only trim and combo-clean]"
 }
 
 tmpmk(){
