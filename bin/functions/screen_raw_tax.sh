@@ -47,10 +47,13 @@ screen_tax() {
     fi
   fi
 
+  mkdir -p SCREENING
   for i in *txt
   do
     if [ ! -s "$i" ]; then
       rm -f $i
+    else
+      mv $i SCREENING  
     fi
   done
 }

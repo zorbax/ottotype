@@ -1,12 +1,12 @@
 #!/bin/bash
 
 tmpmk(){
-  if [[ -O $PWD/tmp && -d $PWD/tmp ]]; then
-    TMPDIR=$PWD/tmp
+  if [[ -O $PWD/TMP && -d $PWD/TMP ]]; then
+    TMPDIR=$PWD/TMP
   else
-    rm -rf $PWD/tmp 2> /dev/null
-    mkdir -p $PWD/tmp
-    TMPDIR=$(mktemp -d $PWD/tmp/XXXX)
+    rm -rf $PWD/TMP 2> /dev/null
+    mkdir -p $PWD/TMP
+    TMPDIR=$(mktemp -d $PWD/TMP/XXXX)
   fi
 
   TMP=$TMPDIR

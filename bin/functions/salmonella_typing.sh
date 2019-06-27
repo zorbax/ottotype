@@ -10,7 +10,7 @@ run_salmonella() {
   mkdir -p SEQSERO_${run_name} OUTPUT RESULTS
 
   if [ -z $file ]; then
-    file="salm_id.txt"
+    file="SCREENING/salm_id.txt"
   fi
 
   for i in $(cat $file | cut -f1)
