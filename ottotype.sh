@@ -46,10 +46,10 @@ if [ -s "SCREENING/salm_id.txt" ]; then
   echo "Assembly"
   assembly_idba &>> $log_file || error ${LINENO} $(basename $0)
   echo "Stats"
-  #assembly_stats_cov &>> $log_file || error ${LINENO} $(basename $0)
-  echo "Virulence"
+  assembly_stats_cov &>> $log_file || error ${LINENO} $(basename $0)
+  #echo "Virulence"
   #plas_vir_vfdb &>> $log_file || error ${LINENO} $(basename $0)
-  echo "Plasmids"
+  #echo "Plasmids"
   #plasmids &>> $log_file || error ${LINENO} $(basename $0)
   cd ..
 fi
