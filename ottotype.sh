@@ -54,6 +54,7 @@ if [ -s "SCREENING/salm_id.txt" ]; then
   cd ..
 fi
 
+: <<'END'
 echo "SALM-LIKE"
 
 if [ -s "SCREENING/salm-like.txt" ]; then
@@ -112,6 +113,8 @@ kmer_finder &>> $log_file || error ${LINENO} $(basename $0)
 kraken_tax &>> $log_file || error ${LINENO} $(basename $0)
 antibiotics &>> $log_file || error ${LINENO} $(basename $0)
 cd ..
+
+END
 
 run_name=$(basename `pwd` | cut -d\_ -f1)
 path_results=`find . -type d -name "RESULTS"`
