@@ -23,10 +23,10 @@ echo "Clean"
 clean
 echo "Checklist"
 checklist
-echo "Small samples"
-small_samples
-echo "Screen tax"
-screen_tax
+#echo "Small samples"
+#small_samples
+#echo "Screen tax"
+#screen_tax
 
 if [ -s "SCREENING/salm_id.txt" ]; then
   mkdir -p SALMONELLA
