@@ -63,18 +63,21 @@ error(){
   exit "${code}"
 }
 
-mkdir -p $PWD/log
-log_file=$PWD/log/ottotype.log
+logfile(){
 
-if [ -f $log_file ];then
-  rm -f $log_file
-fi
+  mkdir -p $PWD/log
+  log_file=$PWD/log/ottotype.log
 
-cat << EOF > $log_file
+  if [ -f $log_file ];then
+    rm -f $log_file
+  fi
+
+  cat << EOF > $log_file
 ====================================
 Serotyping pipeline from SSB-CNRDOGM
 ====================================
 EOF
 
-echo -e "\nLOG FILE OTTOTYPE" >> $log_file
-echo $(date +"%Y-%m-%d %H:%M") >> $log_file
+  echo -e "\nLOG FILE OTTOTYPE" >> $log_file
+  echo $(date +"%Y-%m-%d %H:%M") >> $log_file
+}

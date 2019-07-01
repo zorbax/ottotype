@@ -38,19 +38,19 @@ if [ -s "SCREENING/salm_id.txt" ]; then
   done < <(cat SCREENING/salm_id.txt | cut -f1)
 
   cd SALMONELLA
-  #file="../SCREENING/salm_id.txt"
-  #echo "SALMONELLA"
-  #run_salmonella &>> $log_file || error ${LINENO} $(basename $0)
-  #echo "Trimming"
-  #trimming &>> $log_file || error ${LINENO} $(basename $0)
+  file="../SCREENING/salm_id.txt"
+  echo "SALMONELLA"
+  run_salmonella &>> $log_file || error ${LINENO} $(basename $0)
+  echo "Trimming"
+  trimming &>> $log_file || error ${LINENO} $(basename $0)
   echo "Assembly"
   assembly_idba &>> $log_file || error ${LINENO} $(basename $0)
   echo "Stats"
   assembly_stats_cov &>> $log_file || error ${LINENO} $(basename $0)
-  #echo "Virulence"
-  #plas_vir_vfdb &>> $log_file || error ${LINENO} $(basename $0)
-  #echo "Plasmids"
-  #plasmids &>> $log_file || error ${LINENO} $(basename $0)
+  echo "Virulence"
+  plas_vir_vfdb &>> $log_file || error ${LINENO} $(basename $0)
+  echo "Plasmids"
+  plasmids &>> $log_file || error ${LINENO} $(basename $0)
   cd ..
 fi
 
