@@ -44,16 +44,17 @@ if [ -s "SCREENING/salm_id.txt" ]; then
   echo "Trimming"
   trimming &>> $log_file || error ${LINENO} $(basename $0)
   echo "Assembly"
-  assembly_idba &>> $log_file || error ${LINENO} $(basename $0)
+  #assembly_idba &>> $log_file || error ${LINENO} $(basename $0)
   echo "Stats"
-  assembly_stats_cov &>> $log_file || error ${LINENO} $(basename $0)
+  #assembly_stats_cov &>> $log_file || error ${LINENO} $(basename $0)
   echo "Virulence"
-  plas_vir_vfdb &>> $log_file || error ${LINENO} $(basename $0)
+  #plas_vir_vfdb &>> $log_file || error ${LINENO} $(basename $0)
   echo "Plasmids"
-  plasmids &>> $log_file || error ${LINENO} $(basename $0)
+  #plasmids &>> $log_file || error ${LINENO} $(basename $0)
   cd ..
 fi
 
+: <<'END'
 echo "SALM-LIKE"
 
 if [ -s "SCREENING/salm-like.txt" ]; then
@@ -112,6 +113,8 @@ kmer_finder &>> $log_file || error ${LINENO} $(basename $0)
 kraken_tax &>> $log_file || error ${LINENO} $(basename $0)
 antibiotics &>> $log_file || error ${LINENO} $(basename $0)
 cd ..
+
+END
 
 run_name=$(basename `pwd` | cut -d\_ -f1)
 path_results=`find . -type d -name "RESULTS"`
