@@ -18,7 +18,9 @@ T=$(date +%s)
 docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi
 run_name=$(basename `pwd` | cut -d\_ -f1)
 
+logfile
 tmpmk
+
 echo "Clean"
 clean
 echo "Checklist"
