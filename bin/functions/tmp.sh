@@ -15,6 +15,8 @@ tmpmk(){
 }
 
 tmprm(){
+  TMPDIR=$PWD/TMP
+
   if [[ -O $TMPDIR && -d $TMPDIR ]]; then
     rm -rf $TMPDIR/*
   fi
