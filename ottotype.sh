@@ -123,7 +123,7 @@ END
 
 run_name=$(basename `pwd` | cut -d\_ -f1)
 path_results=`find . -type d -name "RESULTS"`
-mkdir RESULTS_${run_name}
+mkdir -p RESULTS_${run_name}
 
 for i in $path_results
 do
