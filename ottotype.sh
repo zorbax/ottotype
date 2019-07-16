@@ -21,7 +21,6 @@ run_name=$(basename `pwd` | cut -d\_ -f1)
 logfile
 tmpmk
 
-: <<'END'
 echo "Clean"
 clean
 echo "Checklist"
@@ -30,8 +29,6 @@ echo "Small samples"
 small_samples
 echo "Screen tax"
 screen_tax
-
-END
 
 if [ -s "SCREENING/salm_id.txt" ]; then
   mkdir -p SALMONELLA
@@ -44,17 +41,17 @@ if [ -s "SCREENING/salm_id.txt" ]; then
 
   cd SALMONELLA
   file="../SCREENING/salm_id.txt"
-  #echo "SALMONELLA"
-  #run_salmonella &>> $log_file || error ${LINENO} $(basename $0)
+  echo "SALMONELLA"
+  run_salmonella &>> $log_file || error ${LINENO} $(basename $0)
   echo "Trimming"
   trimming &>> $log_file || error ${LINENO} $(basename $0)
-  echo "Assembly"
+  #echo "Assembly"
   #assembly_idba &>> $log_file || error ${LINENO} $(basename $0)
-  echo "Stats"
+  #echo "Stats"
   #assembly_stats_cov &>> $log_file || error ${LINENO} $(basename $0)
-  echo "Virulence"
+  #echo "Virulence"
   #plas_vir_vfdb &>> $log_file || error ${LINENO} $(basename $0)
-  echo "Plasmids"
+  #echo "Plasmids"
   #plasmids &>> $log_file || error ${LINENO} $(basename $0)
   cd ..
 fi
