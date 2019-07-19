@@ -120,20 +120,20 @@ run_salmonella() {
   echo "SRST2: DONE"
 
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
-  mkdir ARIBA_${run_name}
+  mkdir -p ARIBA_${run_name}
 
-  $docker_cmd ariba ariba pubmlstget "Salmonella enterica" Salmonella &> /dev/null && \
-  $docker_cmd ariba ariba getref card card &> /dev/null && \
-  $docker_cmd ariba ariba prepareref -f card.fa -m card.tsv card.prepareref &> /dev/null
+  $docker_cmd ariba ariba pubmlstget "Salmonella enterica" Salmonella && \
+  $docker_cmd ariba ariba getref card card && \
+  $docker_cmd ariba ariba prepareref -f card.fa -m card.tsv card.prepareref
 
   for i in $(cat $file | cut -f1)
   do
     $docker_cmd ariba ariba run /data/Salmonella/ref_db \
-                ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_ariba &> /dev/null && \
+                ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_ariba && \
     mv ${i}_ariba ARIBA_${run_name}
 
     $docker_cmd ariba ariba run /data/card.prepareref \
-                ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_card &> /dev/null && \
+                ${i}_R1.fastq.gz ${i}_R2.fastq.gz ${i}_card && \
     mv ${i}_card ARIBA_${run_name}
   done
 

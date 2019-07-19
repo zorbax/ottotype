@@ -10,10 +10,10 @@ trimming() {
     trimmomatic PE -phred33 -threads $(nproc) $r1 $r2 \
               TRIMMING/${name}_R1.trim.fastq.gz TRIMMING/1U2U/${name}.1U.trim.fastq.gz \
               TRIMMING/${name}_R2.trim.fastq.gz TRIMMING/1U2U/${name}.2U.trim.fastq.gz \
-              SLIDINGWINDOW:4:20 MINLEN:75
+              ILLUMINACLIP:NexteraPE-PE.fa:2:30:10 > $name.trim.log
 
     if [ $? -eq 0 ]; then
-      rm *trim.log
+      rm $name.trim.log
     fi
   done
 }
