@@ -10,7 +10,7 @@ screen_tax() {
         { print $1, $6 > "nosalm_id.txt"}
       }'
 
-  dbNCBI="$HOME/bin/16S/NCBI.gz"
+  dbNCBI="/mnt/disk1/bin/16S/NCBI.gz"
 
   for i in *R1.fastq.gz
   do
@@ -53,7 +53,7 @@ screen_tax() {
     if [ ! -s "$i" ]; then
       rm -f $i
     else
-      mv $i SCREENING  
+      mv $i SCREENING
     fi
   done
 }

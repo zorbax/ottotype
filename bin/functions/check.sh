@@ -98,9 +98,9 @@ check_dockers(){
 
 check_databases(){
 
-  dbNCBI="$HOME/bin/16S/NCBI.gz"
-  dbRDP="$HOME/bin/16S/RDP.gz"
-  dbSILVA="$HOME/bin/16S/SILVA.gz"
+  dbNCBI="/mnt/disk1/bin/16S/NCBI.gz"
+  dbRDP="/mnt/disk1/bin/16S/RDP.gz"
+  dbSILVA="/mnt/disk1/bin/16S/SILVA.gz"
   dbKraken="/mnt/disk2/bin/Kraken2/yggdrasil"
   #Old version of Kmerfinder database
   # dbKmerfinder_prefix="/mnt/disk1/bin/kmerfinder_DB/bacteria.organisms.ATGAC"
