@@ -182,7 +182,7 @@ run_salmonella() {
        > RESULTS/ariba_${run_name}_NF_enterobase.tsv 2>/dev/null
 
   find RESULTS/ -type f -name "null.tsv" -delete -or -size 0 -delete
-  touch RESULTS
+  touch -c RESULTS
   docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
 
   echo "ARIBA: DONE"
