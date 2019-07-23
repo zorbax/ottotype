@@ -10,6 +10,10 @@ ARG ARIBA_TAG=master
 
 RUN mkdir /data
 
+RUN groupadd fuse && \
+    useradd --create-home --shell /bin/bash --user-group --uid 1000 --groups sudo,fuse ssb && \
+    echo "ssb\nssb\n" | passwd ssb && chown ssb:ssb /data
+
 RUN apt-get -qq update && \
     apt-get install --no-install-recommends -y \
     build-essential \
@@ -53,5 +57,7 @@ RUN git clone https://github.com/sanger-pathogens/ariba.git \
 CMD ariba
 
 VOLUME /data
+
+USER ssb
 
 WORKDIR /data
