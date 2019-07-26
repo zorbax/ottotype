@@ -34,24 +34,25 @@ assembly_idba(){
               tail -n+2 | awk '{ print $3}'  | cut -d\. -f1)
 
     if [[ $medianec -ge 128 ]]; then
-      idba_ud500 -r ${name}_12.t.pp.ec.fa -o ${name} --mink 35 --maxk 249 \
-          --num_threads $(nproc) --min_pairs 2 > /dev/null
+      idba_ud500 -r ${name}_12.t.pp.ec.fa -o ${name}_idba --mink 35 --maxk 249 \
+          --num_threads $(nproc) --min_pairs 2
     else
-      idba_ud -r ${name}_12.t.pp.ec.fa -o ${name} --mink 35 --maxk 124 \
-          --num_threads $(nproc) --min_pairs 2 > /dev/null
+      idba_ud -r ${name}_12.t.pp.ec.fa -o ${name}_idba --mink 35 --maxk 124 \
+          --num_threads $(nproc) --min_pairs 2
     fi
 
-    if [[ $? != 0 ]]; then
-       cp ${name}/contig.fa ${name}-idba-assembly.fa
+    if [[ -s "${name}_idba/scaffold.fa" ]]; then
+      cp ${name}_idba/scaffold.fa ${name}_idba/${name}-idba-assembly.fa
     else
-       cp ${name}/scaffold.fa ${name}-idba-assembly.fa
+      cp ${name}_idba/contig.fa ${name}_idba/${name}-idba-assembly.fa
     fi
 
-    rm -rf *pp.{fq,bwt,sai,rbwt} *out *err *rsai *ec.{fq,fa} ${name}
+    rm -f *pp.{fq,bwt,sai,rbwt} *out *err *rsai *ec.{fq,fa}
 
-    cat ${name}-idba-assembly.fa | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
+    assembly="${name}_idba/${name}-idba-assembly.fa"
+    cat ${assembly} | sed ':a;N;/^>/M!s/\n//;ta;P;D' | \
          awk '/^>/ { getline seq } length(seq) >500 { print $0 "\n" seq }' \
          > ASSEMBLY/${name}-idba-assembly.fa
-    rm ${name}-idba-assembly.fa
+    rm -rf ${name}_idba
   done
 }

@@ -34,8 +34,8 @@ kmer_finder(){
     echo "# RAW_${name}"
     cat $kraw/${name}/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
     echo
-    echo "# GENOME_${name}"
-    cat $kgenome/${name}/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
+    #echo "# GENOME_${name}"
+    #cat $kgenome/${name}/results.txt | tail -n+2 | awk -F'\t' -v OFS='\t' '{ print $NF, $3, $13}'
     echo
   done > RESULTS/kmerfinder_${run_name}.txt
 }

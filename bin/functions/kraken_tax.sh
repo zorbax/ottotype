@@ -23,7 +23,7 @@ kraken_tax(){
         sed "s/^  /${name}\t/" | sponge KRAKEN2_${run_name}/${name}.kraken2.log
     # rs and sponge > sudo apt-get install moreutils rs
     tax=$(cat KRAKEN2_${run_name}/${name}.kraken2-report.tsv | \
-          awk -F'\t' '{if($1>5) print }' | grep -P '\t[S]\t'| \
+          awk -F'\t' '{if($1>3) print }' | grep -P '\t[S]\t'| \
           awk -F'\t' '{ print $6, "#"$1}' | sed -E 's/^ {1,}//; s/[ ]{1,}/_/g' | \
           rs -TeC | sed 's/_#_/ /g')
 

@@ -15,7 +15,7 @@ done
 
 T=$(date +%s)
 
-docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi
+docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi &> /dev/null
 run_name=$(basename `pwd` | cut -d\_ -f1)
 
 logfile
