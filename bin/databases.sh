@@ -121,10 +121,9 @@ elif [ ! -d "$dbKraken" ]; then
       exit 1
     fi
   fi
-elif [! -d ""]; then
+elif [! -f "$plasmid_db"]; then
   cd $HOME/bin/plasmidid_db
   mkdir db_plasmids
-
   server="ftp://ftp.ncbi.nlm.nih.gov/refseq/release"
   wget -nv -P db_plasmids/ $server/plasmid/plasmid*genomic.fna.gz
 
@@ -133,9 +132,10 @@ elif [! -d ""]; then
        grep "complete" | grep "Salmonella" | grep -v "CDS" | \
        sed 's/\t/\n/' > plasmid.complete.$(date +%F).fna
 
-  cd-hit-est -i plasmid.complete.2019-04-23.fna \
+  memory=$(awk '{ printf "%.2f", $2/1024; exit}' /proc/meminfo | cut -d\. -f1)
+
+  cd-hit-est -i plasmid.complete.$(date +%F).fna \
              -o plasmid.complete.nr100.fna \
-             -c 1 -T $(nproc) -M 400000
-  mv plasmid.complete.nr100.fna $HOME/bin/plasmidid_db/ && cd ..
-  rm -rf db_plasmids
+             -c 1 -T $(nproc) -M $memory
+  rm *fna.clstr
 fi

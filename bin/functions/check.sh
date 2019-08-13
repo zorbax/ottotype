@@ -109,6 +109,7 @@ check_databases(){
   dbKmerfinder_list=(seq.b name length.b comp.b)
   dbKmerfinder="${dbKmerfinder_list[@]/#/$dbKmerfinder_prefix}"
   databases="$dbNCBI $dbRDP $dbSILVA $dbKraken $dbKmerfinder"
+  plasmid_db="/mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna"
 
   counter=0
   printf '\n%s\t%60s\n' "DATABASE" "STATUS"
