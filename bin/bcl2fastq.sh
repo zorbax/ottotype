@@ -5,7 +5,7 @@ display_usage(){
   echo -e "\t$(basename $0) SampleSheet.csv\n"
 }
 
-if [ $# -eq 1 ]; then
+if [ $# -le 1 ]; then
   display_usage
   exit 1
 fi
