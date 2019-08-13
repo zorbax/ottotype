@@ -10,8 +10,10 @@ if [ $# -le 1 ]; then
   exit 1
 fi
 
+samplesheet=$1
+
 bcl2fastq -R . --no-lane-splitting \
     -r $(nproc) -p $(nproc) -w $(nproc) \
     --fastq-compression-level 9 \
     --minimum-trimmed-read-length 70 \
-    -l NONE -o fastq --sample-sheet $1
+    -l NONE -o fastq --sample-sheet $samplesheet
