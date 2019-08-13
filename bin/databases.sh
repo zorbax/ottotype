@@ -123,12 +123,12 @@ elif [ ! -d "$dbKraken" ]; then
   fi
 elif [! -d ""]; then
   cd $HOME/bin/plasmidid_db
-  mkdir db_plasmids && cd "$_"
+  mkdir db_plasmids
 
   server="ftp://ftp.ncbi.nlm.nih.gov/refseq/release"
   wget -nv -P db_plasmids/ $server/plasmid/plasmid*genomic.fna.gz
 
-  zcat plasmid.*.genomic.fna.gz | \
+  zcat db_plasmids/plasmid.*.genomic.fna.gz | \
        perl -pe 'if(/\>/){s/\n/\t/}; s/\n//; s/\>/\n\>/' | \
        grep "complete" | grep "Salmonella" | grep -v "CDS" | \
        sed 's/\t/\n/' > plasmid.complete.$(date +%F).fna
