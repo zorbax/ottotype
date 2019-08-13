@@ -12,7 +12,7 @@ display_usage() {
   echo -e "\nUsage:"
   echo -e "\t$(basename $0) -r reference.fna"
   echo -e "\t$(basename $0) -r reference.fna -d [Docker enabled]"
-  echo -e "\t$(basename $0) -n [Only trim and combo-clean]"
+  echo -e "\t$(basename $0) -n [Only trim and combo-clean]\n"
 }
 
 tmpmk(){

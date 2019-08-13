@@ -1,5 +1,34 @@
 #!/bin/bash
 
+display_usage(){
+  echo -e "\nUsage:"
+  echo -e "\t$(basename $0) -p "
+}
+
+if [ $# -le 1 ]; then
+  display_usage
+  exit 1
+fi
+
+if [ -z "$var" ]; then
+  echo "\$var is empty"
+else
+  echo "\$var is NOT empty"
+fi
+
+while getopts ":p:" opt
+do
+  case $opt in
+    p) path="$OPTARG"
+    ;;
+    ?) echo "Invalid option -$OPTARG" >&2
+       exit 1
+    ;;
+  esac
+done
+
+
+
 if [ ! -d "$HOME/bin" ]; then
   mkdir -p $HOME/bin
 
@@ -30,6 +59,8 @@ dbRDP="$HOME/bin/16S/RDP.gz"
 dbSILVA="$HOME/bin/16S/SILVA.gz"
 dbKraken="$HOME/bin/Kraken2/yggdrasil"
 dbKmerfinder="$HOME/bin/KmerFinder_DB/bacteria.organisms.ATGAC"
+plasmid_db="$HOME/bin/plasmidid_db/plasmid.complete.nr100.fna"
+
 
 mkdir -p $HOME/bin/{16S,KmerFinder_DB}
 
@@ -90,4 +121,21 @@ elif [ ! -d "$dbKraken" ]; then
       exit 1
     fi
   fi
+elif [! -d ""]; then
+  cd $HOME/bin/plasmidid_db
+  mkdir db_plasmids && cd "$_"
+
+  server="ftp://ftp.ncbi.nlm.nih.gov/refseq/release"
+  wget -nv -P db_plasmids/ $server/plasmid/plasmid*genomic.fna.gz
+
+  zcat plasmid.*.genomic.fna.gz | \
+       perl -pe 'if(/\>/){s/\n/\t/}; s/\n//; s/\>/\n\>/' | \
+       grep "complete" | grep "Salmonella" | grep -v "CDS" | \
+       sed 's/\t/\n/' > plasmid.complete.$(date +%F).fna
+
+  cd-hit-est -i plasmid.complete.2019-04-23.fna \
+             -o plasmid.complete.nr100.fna \
+             -c 1 -T $(nproc) -M 400000
+  mv plasmid.complete.nr100.fna $HOME/bin/plasmidid_db/ && cd ..
+  rm -rf db_plasmids
 fi

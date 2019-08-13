@@ -67,7 +67,7 @@ else
                 --pe1-2 TRIMMING/${i}_R2.trim.fastq.gz \
                 --pe1-s TRIMMING/1U2U/${i}.1U.trim.fastq.gz \
                 --pe1-s TRIMMING/1U2U/${i}.2U.trim.fastq.gz \
-                -o ${i}_spades -t $(nproc) -m $memory 2>/dev/null
+                -o ${i}_spades -t $(nproc) -m $memory &>/dev/null
 
       find ${i}_spades -maxdepth 1 -type f -name 'scaffolds.fasta' -exec cp {} ${i}.tmp \;
 

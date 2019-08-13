@@ -148,7 +148,7 @@ checklist(){
   check_connection &>> $log_file || error ${LINENO} $(basename $0)
   check_dependencies salmonella.py minimap2 translate.py trimmomatic \
       sga Rscript idba_ud500 idba_ud spades.py bwa \
-      samtools mlst kraken2 bioawk &>> $log_file || error ${LINENO} $(basename $0)
-  check_dockers seqsero srst2 ariba kraken2 kmerfinder &>> $log_file || error ${LINENO} $(basename $0)
+      samtools mlst kraken2 bioawk cd-hit &>> $log_file || error ${LINENO} $(basename $0)
+  check_dockers seqsero srst2 ariba kraken2 kmerfinder plasmidid &>> $log_file || error ${LINENO} $(basename $0)
   check_databases &>> $log_file || error ${LINENO} $(basename $0)
 }

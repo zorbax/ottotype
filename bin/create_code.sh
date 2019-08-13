@@ -1,5 +1,16 @@
 #!/bin/bash
 
+display_usage(){
+  echo -e "\nUsage:"
+  echo -e "\t$(basename $0) ARGannot_rVERSION.fasta\n"
+}
+
+if [ $# -le 1 ]; then
+  display_usage
+  exit 1
+fi
+
+
 grep < $1 \> | sed 's/ /;/' | \
   tr ';' '\t' | awk -v OFS='\t' '{ print $5, $4}' | \
   sed 's/Agly/AGly/g' | tee >( sort -k1,2 \
