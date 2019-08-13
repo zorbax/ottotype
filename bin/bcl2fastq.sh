@@ -5,12 +5,14 @@ display_usage(){
   echo -e "\t$(basename $0) SampleSheet.csv\n"
 }
 
-if [ $# -le 1 ]; then
+samplesheet=$1
+
+if [ -z "$samplesheet" ]; then
   display_usage
   exit 1
 fi
 
-samplesheet=$1
+
 
 bcl2fastq -R . --no-lane-splitting \
     -r $(nproc) -p $(nproc) -w $(nproc) \
