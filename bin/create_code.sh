@@ -1,6 +1,6 @@
 #!/bin/bash
 
-grep < ARGannot_r3.fasta \> | sed 's/ /;/' | \
+grep < $1 \> | sed 's/ /;/' | \
   tr ';' '\t' | awk -v OFS='\t' '{ print $5, $4}' | \
   sed 's/Agly/AGly/g' | tee >( sort -k1,2 \
   > antibiotics_code.v3.tsv) >( cut -f1 | sort | \
