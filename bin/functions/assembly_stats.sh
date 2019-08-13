@@ -14,19 +14,18 @@ assembly_stats_cov() {
     reads=TRIMMING/$(basename $i | cut -d\- -f1)
 
     echo -e "Assembly:\t${name}" | tee ${name}.stats
-    bwa index -a bwtsw $i -p ${name} &> /dev/null
-    bwa mem -t $(nproc) ${name} $reads\_R1.trim.fastq.gz $reads\_R2.trim.fastq.gz \
-         2> /dev/null | samtools view -Sb -F4 - | \
+    bwa index -a bwtsw $i -p ${name}
+    bwa mem -t $(nproc) ${name} $reads\_R1.trim.fastq.gz $reads\_R2.trim.fastq.gz | \
+         samtools view -Sb -F4 - | \
          samtools sort -@ $(nproc) - -o ${name}.mapped.sorted.bam 2>/dev/null
     samtools index ${name}.mapped.sorted.bam
     rm ${name}.{bwt,pac,ann,amb,sa}
 
     cov=$(samtools mpileup ${name}.mapped.sorted.bam 2> /dev/null | \
-      awk '{ count++ ; sum += $4 } END { printf "%s\t%.2f\n", "Coverage:", sum/count }')
-    cover=`echo $cov | awk '{ print $2 }'`
-
-    cat $i | awk '!/^>/ { printf "%s", $0; n = "\n" }
-        /^>/ { print n $0; n = "" } END { printf "%s", n }'| \
+          awk '{ count++ ; sum += $4 } END { printf "%s\t%.2f\n", "Coverage:", sum/count }')
+    cover=$(echo $cov | awk '{ print $2 }')
+    cat $i | awk '!/^>/ { printf "%s", $0; n = "\n" } /^>/ \
+        { print n $0; n = "" } END { printf "%s", n }'| \
         sed '/^>/ d'| awk '{ print length($0) }' | sort -gr > ${name}_contig_lengths.stat
 
     contigs_number=$(cat ${name}_contig_lengths.stat | wc -l)
@@ -53,5 +52,6 @@ assembly_stats_cov() {
         >> assembly_$run_name.stats
     find . -maxdepth 1 -type f \( -name "*.bam" -o -name "*.bai" \) -exec rm {} \;
   done
+
   mv assembly_$run_name.stats OUTPUT/ && cp OUTPUT/assembly_$run_name.stats RESULTS/
 }
