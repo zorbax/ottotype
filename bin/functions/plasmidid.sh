@@ -4,7 +4,7 @@ plasmids(){
 
   plasmid_db="/mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna"
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir PLASMIDS_${run_name}
+  mkdir -p PLASMIDS_${run_name} RESULTS
 
   for i in *R1.fastq.gz
   do
@@ -46,6 +46,10 @@ plasmids(){
       rm ${name}.fna
 
       out="PLASMIDS_${run_name}/${name}/images/${name}_summary.png"
+      result=$(cat PLASMIDS_${run_name}/${name}/data/${name}.karyotype_summary.txt | \
+               sed 's/chr - //' | cut -d\. -f1 | tr '\n' ' ' | sed 's/ $//')
+      echo -e "$name\t$result" >> RESULTS/plasmids_${run_name}.tsv
+
       if [ ! -f "$out" ]; then
         rm -rf PLASMIDS_${run_name}/${name}
         echo -e "${name}\tNF" >> $file

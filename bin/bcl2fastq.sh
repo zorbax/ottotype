@@ -12,8 +12,6 @@ if [ -z "$samplesheet" ]; then
   exit 1
 fi
 
-
-
 bcl2fastq -R . --no-lane-splitting \
     -r $(nproc) -p $(nproc) -w $(nproc) \
     --fastq-compression-level 9 \
