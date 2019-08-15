@@ -5,7 +5,7 @@
 run_salmonella() {
   run_name=$(basename `pwd` | cut -d\_ -f1)
 
-  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
+  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
   docker_cmd="docker run --rm -it -v $(pwd):/data -w /data"
   mkdir -p SEQSERO_${run_name} OUTPUT RESULTS
 
@@ -18,11 +18,11 @@ run_salmonella() {
     if [[ "find . -type l -name "$i*"" ]]; then
       R1=$(ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R1/) { print $1 }')
       R2=$(ls -lt $i* | awk '{ print $NF }' | awk '($1 ~ /R2/) { print $1 }')
-      $docker_cmd seqsero SeqSero.py -m 2 -i $R1 $R2 &> /dev/null && \
+      $docker_cmd seqsero SeqSero.py -m 2 -i $R1 $R2 && \
       mv SeqSero_result* SEQSERO_${run_name}
     else
       $docker_cmd seqsero SeqSero.py -m 2 -i ${i}_R1.fastq.gz ${i}_R2.fastq.gz \
-          &> /dev/null && mv SeqSero_result* SEQSERO_${run_name}
+          && mv SeqSero_result* SEQSERO_${run_name}
     fi
   done
 
@@ -44,11 +44,11 @@ run_salmonella() {
 
   echo "SeqSero: DONE"
 
-  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
+  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
 
   mkdir -p SRST2_${run_name}
 
-  $docker_cmd srst2 getmlst.py --species "Salmonella" &> /dev/null
+  $docker_cmd srst2 getmlst.py --species "Salmonella"
 
   if [ -f "ARGannot.fasta" ]; then
     "ARGannot is already downloaded"
@@ -60,7 +60,7 @@ run_salmonella() {
   $docker_cmd srst2 srst2 --log --output /data/SRST2 --input_pe *fastq.gz \
       --forward R1 --reverse R2 --mlst_db Salmonella_enterica.fasta \
       --mlst_definitions senterica.txt --mlst_delimiter '_' \
-      --gene_db ARGannot.fasta --threads $(nproc) &> /dev/null
+      --gene_db ARGannot.fasta --threads $(nproc)
 
   find . -maxdepth 1 -name "SRST2_*" -type f -not -path "SRST2_$run_name/*" \
       -exec mv {} SRST2_${run_name}/ \;
@@ -113,13 +113,13 @@ run_salmonella() {
   id1=$(cat RESULTS/srst2_${run_name}_enterobase.tsv | cut -f1 | sort | uniq)
   id2=$(cat RESULTS/null.tsv | cut -f1 | sort | uniq)
   diff <(echo "$id1") <(echo "$id2") | grep "^\>" \
-       > RESULTS/srst2_${run_name}_NF_enterobase.tsv 2>/dev/null
+       > RESULTS/srst2_${run_name}_NF_enterobase.tsv
 
   find RESULTS/ -type f -name "null.tsv" -delete -or -size 0 -delete
 
   echo "SRST2: DONE"
 
-  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v &> /dev/null
+  docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
   mkdir -p ARIBA_${run_name}
 
   $docker_cmd ariba ariba pubmlstget "Salmonella enterica" Salmonella && \

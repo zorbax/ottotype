@@ -42,11 +42,11 @@ if [ -s "SCREENING/salm_id.txt" ]; then
   cd SALMONELLA
   file="../SCREENING/salm_id.txt"
   echo "SALMONELLA"
-  run_salmonella
+  run_salmonella &>> $log_file || error ${LINENO} $(basename $0)
   echo "Trimming"
-  trimming
+  trimming &>> $log_file || error ${LINENO} $(basename $0)
   echo "Assembly"
-  assembly_idba
+  assembly_idba &>> $log_file || error ${LINENO} $(basename $0)
   echo "Stats"
   assembly_stats_cov &>> $log_file || error ${LINENO} $(basename $0)
   echo "Virulence"

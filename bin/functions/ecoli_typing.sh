@@ -67,5 +67,10 @@ ecoli_type(){
       SRST2Ec_${run_name}/srst2Ec_${run_name}_achtman#2.tsv | \
       awk -v OFS='\t' '$1 == $10 { $10="" ; print}' \
       > RESULTS/srst12Ec_${run_name}_achtman12.tsv
+
+  cat SRST2Ec_${run_name}/SRST2_LEE__mlst__LEE_mlst__results.txt | \
+      cut -d$'\t' -f 1-9 | sed 's/[?*]//g; /^$/d' | perl -pe 's/_S[0-9]{1,}_//g;
+      s/_//' | tail -n+2 | sort > RESULTS/srst2Ec_${run_name}_LEE.tsv
+
   mv SRST2Ec_${run_name} OUTPUT
 }

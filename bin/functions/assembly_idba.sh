@@ -11,7 +11,7 @@ assembly_idba(){
 
     echo "${name}"
     sga preprocess -q 25 -f 20 --pe-mode=1 ${r1} ${r2} \
-        > ${name}_12.t.pp.fq 2> /dev/null
+        > ${name}_12.t.pp.fq &> /dev/null
     median=$(cat ${name}_12.t.pp.fq | awk 'NR%4==2 { print length }' | head -20000 | \
             Rscript -e 'summary (as.numeric (readLines ("stdin")))' | tail -n+2 | \
             awk '{ print $3 }'  | cut -d\. -f1)
@@ -35,10 +35,10 @@ assembly_idba(){
 
     if [[ $medianec -ge 128 ]]; then
       idba_ud500 -r ${name}_12.t.pp.ec.fa -o ${name}_idba --mink 35 --maxk 249 \
-          --num_threads $(nproc) --min_pairs 2
+          --num_threads $(nproc) --min_pairs 2 &> /dev/null
     else
       idba_ud -r ${name}_12.t.pp.ec.fa -o ${name}_idba --mink 35 --maxk 124 \
-          --num_threads $(nproc) --min_pairs 2
+          --num_threads $(nproc) --min_pairs 2 &> /dev/null
     fi
 
     if [[ -s "${name}_idba/scaffold.fa" ]]; then
