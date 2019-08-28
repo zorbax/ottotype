@@ -3,7 +3,7 @@
 ecoli_type(){
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
-  mkdir -p {SRST2Ec_${run_name},OUTPUT,RESULTS}
+  mkdir -p {SRST2Ec_$run_name,OUTPUT,RESULTS}
 
   repo="https://raw.githubusercontent.com/CNRDOGM"
   docker_cmd="docker run --rm -it -v $(pwd):/data -u $(id -u):$(id -g) -w /data"
@@ -38,7 +38,8 @@ ecoli_type(){
        --mlst_delimiter '_' --threads $(nproc) &> /dev/null
 
   find . -maxdepth 1 -iname "*results.txt" -type f -exec mv {} SRST2Ec_${run_name} \;
-  rm -f EcOH* LEE* ARG* *tfa SRST2_*.{bam,pileup} Escherichia* ecoli* *log
+  rm -f EcOH* LEE* ARG* *tfa SRST2_*.{bam,pileup} Escherichia* ARG* ecoli* *log
+  #mv SRST*log LOGS
 
   cat SRST2Ec_${run_name}/SRST2_EcOH__fullgenes__EcOH__results.txt | tail -n+2 | \
      sort -nk 1 | sed -E 's/_S[0-9]{1,}_//; s/_//' | awk -v OFS='\t' '{ print $1, $3, $NF }' | \
