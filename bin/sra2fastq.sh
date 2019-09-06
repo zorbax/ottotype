@@ -27,6 +27,7 @@ do
     echo -e "${i}\t${k}"
     fastq-dump --split-files --defline-seq '@$ac.$si.$sg/$ri' \
                --defline-qual '+' --gzip ${k}
+    # fasterq-dump ${k} -t /dev/shm -e $(nproc)
     rename 's/_1.fastq/_S01_R1_L001.fastq/ ; s/_2.fastq/_S01_R2_L001.fastq/' *gz
   done
 done
