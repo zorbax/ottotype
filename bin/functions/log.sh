@@ -1,6 +1,10 @@
 #!/bin/bash
 
-end(){
+start_tm(){
+  T=$(date +%s)
+}
+
+end_tm(){
 
   echo -e "\n\n========"
   echo "  DONE"
@@ -23,8 +27,8 @@ end(){
 tm() {
 
   local T=$(date +%s)
-  local command="$@"
-  $@
+  local command=("$@")
+
   rc=$?
   local R=$(($(date +%s)-$T))
   local D=$((R/60/60/24))

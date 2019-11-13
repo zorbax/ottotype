@@ -15,7 +15,8 @@ assembly_stats_cov() {
 
     echo -e "Assembly:\t${name}" | tee ${name}.stats
     bwa index -a bwtsw $i -p ${name}
-    bwa mem -t $(nproc) ${name} $reads\_R1.trim.fastq.gz $reads\_R2.trim.fastq.gz | \
+    bwa mem -t $(nproc) ${name} \
+         ${reads}_R1.trim.fastq.gz ${reads}_R2.trim.fastq.gz | \
          samtools view -Sb -F4 - | \
          samtools sort -@ $(nproc) - -o ${name}.mapped.sorted.bam 2>/dev/null
     samtools index ${name}.mapped.sorted.bam

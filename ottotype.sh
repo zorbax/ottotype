@@ -1,34 +1,23 @@
 #!/bin/bash
 
-####   _____                 _   _
-####  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___
-####  | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
-####  |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
-####  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
-####
-
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 for i in $dir/bin/functions/*sh
 do
-  source $i
+  source ${i}
 done
 
-T=$(date +%s)
-
-docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi &> /dev/null
-run_name=$(basename `pwd` | cut -d\_ -f1)
-
 logfile
+start_tm &>> $log_file
 tmpmk
 
-echo "Clean"
+run_name=$(basename "$(pwd)" | cut -d\_ -f1)
+
 clean
-echo "Checklist"
 checklist
-echo "Small samples"
 small_samples
-echo "Screen tax"
 screen_tax
+
+docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi -f &> /dev/null
 
 if [ -s "SCREENING/salm_id.txt" ]; then
   mkdir -p SALMONELLA
@@ -36,7 +25,7 @@ if [ -s "SCREENING/salm_id.txt" ]; then
   while read -r fastq
   do
     find . -name "$fastq*fastq.gz" -type f -not -path "SALMONELLA/*" \
-        -print0 | xargs -0 mv -t "SALMONELLA/" 2>/dev/null
+           -print0 | xargs -0 mv -t "SALMONELLA/" 2>/dev/null
   done < <(cat SCREENING/salm_id.txt | cut -f1)
 
   cd SALMONELLA
@@ -125,4 +114,4 @@ do
 done
 
 tmprm
-end &>> $log_file
+end_tm &>> $log_file
