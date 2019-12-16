@@ -52,7 +52,9 @@ EOF
   fi
 fi
 
-. ~/.bashrc
+. "$HOME/.bashrc"
+
+. "${HOME}"/.bashrc
 
 dbNCBI="$HOME/bin/16S/NCBI.gz"
 dbRDP="$HOME/bin/16S/RDP.gz"
@@ -84,7 +86,7 @@ elif [ ! -f "$dbSILVA" ]; then
     print ">" $name " " $comment "\n" $seq }' | seqtk seq -l 60 -U > SILVA.tmp1
   cd-hit-est -i SILVA.tmp1 -o SILVA.tmp2 -c 1.0 -T 0 -M 2000 -d 250
   cp SILVA.tmp2 $HOME/bin/16S/SILVA && rm -f SILVA.tmp1 SILVA.tmp2 SILVA.tmp2.clstr
-  cd $HOME/bin/16S/SILVA && gzip -9 SILVA && cd $HOME
+  cd $HOME/bin/16S/SILVA && gzip -9 SILVA && cd $HOME || exit
 elif [ ! -f "$dbKmerfinder" ]; then
   dbKmerfinder2="/mnt/disk1/bin/Kmerfinder_DB/bacteria.organisms.ATGAC"
   if [ ! -f "$dbKraken2" ]; then
@@ -98,10 +100,10 @@ elif [ ! -f "$dbKmerfinder" ]; then
       server="ftp://ftp.cbs.dtu.dk/public/CGE/databases/KmerFinder"
       wget $server/version/latest/{config,bacteria*} -P $KmerFinder_DB
       tar -xzf $KmerFinder_DB/bacteria.tar.gz -C $KmerFinder_DB
-      rm $KmerFinder_DB/*.tar.gz && cd $KmerFinder_DB
+      rm $KmerFinder_DB/*.tar.gz && cd $KmerFinder_DB || exit
       if [ ! -f "bacteria.name" ]; then
         find . -type f -name "bacteria.*" -exec mv {} . \;
-        rm -rf srv/ && cd $current_dir
+        rm -rf srv/ && cd $current_dir || exit
       fi
     fi
   fi
@@ -114,15 +116,15 @@ elif [ ! -d "$dbKraken" ]; then
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
       current_dir=$(pwd)
-      mkdir $HOME/bin/Kraken2/yggdrasil && cd "$_"
-      kraken2-build --standard --threads $(nproc) --db yggdrasil
-      cd current_dir
+      mkdir $HOME/bin/Kraken2/yggdrasil && cd "$_" || exit
+      kraken2-build --standard --threads "$(nproc)" --db yggdrasil
+      cd current_dir || exit
     else
       exit 1
     fi
   fi
-elif [! -f "$plasmid_db"]; then
-  cd $HOME/bin/plasmidid_db
+elif [ ! -f "$plasmid_db" ]; then
+  cd $HOME/bin/plasmidid_db || exit
   mkdir db_plasmids
   server="ftp://ftp.ncbi.nlm.nih.gov/refseq/release"
   wget -nv -P db_plasmids/ $server/plasmid/plasmid*genomic.fna.gz
@@ -130,12 +132,12 @@ elif [! -f "$plasmid_db"]; then
   zcat db_plasmids/plasmid.*.genomic.fna.gz | \
        perl -pe 'if(/\>/){s/\n/\t/}; s/\n//; s/\>/\n\>/' | \
        grep "complete" | grep "Salmonella" | grep -v "CDS" | \
-       sed 's/\t/\n/' > plasmid.complete.$(date +%F).fna
+       sed 's/\t/\n/' > plasmid.complete."$(date +%F)".fna
 
   memory=$(awk '{ printf "%.2f", $2/1024; exit}' /proc/meminfo | cut -d\. -f1)
 
-  cd-hit-est -i plasmid.complete.$(date +%F).fna \
+  cd-hit-est -i plasmid.complete."$(date +%F)".fna \
              -o plasmid.complete.nr100.fna \
-             -c 1 -T $(nproc) -M $memory
+             -c 1 -T "$(nproc)" -M $memory
   rm *fna.clstr
 fi
