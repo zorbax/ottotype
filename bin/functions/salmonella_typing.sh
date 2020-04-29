@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #echo -e "\n#Executing" ${FUNCNAME[0]} "\n"
-
+# TODO: update to SeqSero2
 run_salmonella() {
   run_name=$(basename `pwd` | cut -d\_ -f1)
 

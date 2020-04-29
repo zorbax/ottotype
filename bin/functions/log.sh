@@ -17,11 +17,11 @@ end_tm(){
 
   printf 'CMD-> %s\n' "$0"
   printf 'RUNTIME-> '
-  (( $D > 0 )) && printf '%d d ' $D
-  (( $H > 0 )) && printf '%d h ' $H
-  (( $M > 0 )) && printf '%d m ' $M
+  (( $D > 0 )) && printf '%d d ' ${D}
+  (( $H > 0 )) && printf '%d h ' ${H}
+  (( $M > 0 )) && printf '%d m ' ${M}
   (( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
-  printf '%d s\n' $S
+  printf '%d s\n' ${S}
 }
 
 tm() {
@@ -38,12 +38,12 @@ tm() {
 
   printf 'CMD-> %s\n' "$command"
   printf 'RUNTIME-> '
-  (( $D > 0 )) && printf '%d d ' $D
-  (( $H > 0 )) && printf '%d h ' $H
-  (( $M > 0 )) && printf '%d m ' $M
+  (( $D > 0 )) && printf '%d d ' ${D}
+  (( $H > 0 )) && printf '%d h ' ${H}
+  (( $M > 0 )) && printf '%d m ' ${M}
   (( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
-  printf '%d s\n' $S
-  return $rc
+  printf '%d s\n' ${S}
+  return ${rc}
 }
 
 error(){
@@ -72,16 +72,16 @@ logfile(){
   mkdir -p $PWD/log
   log_file=$PWD/log/ottotype.log
 
-  if [ -f $log_file ];then
+  if [[ -f $log_file ]];then
     rm -f $log_file
   fi
 
-  cat << EOF > $log_file
+  cat << EOF > ${log_file}
 ====================================
 Serotyping pipeline from SSB-CNRDOGM
 ====================================
 EOF
 
-  echo -e "\nLOG FILE OTTOTYPE" >> $log_file
-  echo $(date +"%Y-%m-%d %H:%M") >> $log_file
+  echo -e "\nLOG FILE OTTOTYPE" >> ${log_file}
+  echo $(date +"%Y-%m-%d %H:%M") >> ${log_file}
 }

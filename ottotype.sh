@@ -19,7 +19,7 @@ screen_tax
 
 docker images --no-trunc | grep '<none>' | awk '{ print $3 }' | xargs -r docker rmi -f &> /dev/null
 
-if [ -s "SCREENING/salm_id.txt" ]; then
+if [[ -s "SCREENING/salm_id.txt" ]]; then
   mkdir -p SALMONELLA
 
   while read -r fastq
