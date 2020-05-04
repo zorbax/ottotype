@@ -1,5 +1,9 @@
 #!/bin/bash
 
+bwa mem -t $(nproc) ${i} \
+         ${i} | samtools view -Sb -F4 - | \
+         samtools sort -@ $(nproc) - -o ${i%%_*}.mapped.sorted.bam 2>/dev/null
+
 assembly_stats_cov() {
 
   run_name=$(basename `pwd` | cut -d\_ -f1)
