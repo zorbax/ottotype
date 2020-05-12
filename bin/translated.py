@@ -56,16 +56,13 @@ def main():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        usage='translate.py srst2_argannot.tsv output_translated.tsv',
-        description="This script translate the srst2_argannot.tsv table \
-                 to an antibiotic category")
-    parser.add_argument(
-                "[1] srst2_argannot.tsv",
-                help="srst2_argannot.tsv file")
-    parser.add_argument(
-                "[2] output_translated.tsv",
-                help="output file translated")
+    parser = argparse.ArgumentParser(usage='translate.py srst2_argannot.tsv output_translated.tsv',
+                                     description="This script translate the srst2_argannot.tsv "
+                                                 "tableto an antibiotic category")
+    parser.add_argument("[1] srst2_argannot.tsv",
+                        help="srst2_argannot.tsv file")
+    parser.add_argument("[2] output_translated.tsv",
+                        help="output file translated")
     parser.add_argument("-freq", action="store_true",
                         help="Translate without uniqueness")
 

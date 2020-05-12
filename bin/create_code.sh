@@ -5,7 +5,7 @@ display_usage(){
   echo -e "\t$(basename $0) ARGannot_rVERSION.fasta\n"
 }
 
-if [ $# -le 1 ]; then
+if [[ $# -le 1 ]]; then
   display_usage
   exit 1
 fi
@@ -30,15 +30,15 @@ samples=(
 
 for i in $(cat categories.txt)
 do
-  for k in "${samples[@]}"
-  do
-     key="${k%%:*}"
-     val="${k##*:}"
+    for k in "${samples[@]}"
+    do
+        key="${k%%:*}"
+        val="${k##*:}"
 
-     if [ ${i} == ${key} ] ; then
-       sed -i "s/${i}/${val}/" antibiotics_code.v3.tsv
-     fi
-  done
+        if [[ ${i} == ${key} ]] ; then
+            sed -i "s/${i}/${val}/" antibiotics_code.v3.tsv
+        fi
+    done
 done
 
 rm categories.txt
