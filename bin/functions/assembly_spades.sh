@@ -14,7 +14,7 @@ assembly_spades() {
               --pe1-s TRIMMING/1U2U/${name}.2U.trim.fastq.gz \
               -o ${name}_spades -t $(nproc) -m $memory &>/dev/null
 
-    if [ -s "${name}_spades/scaffolds.fasta" ]; then
+    if [[ -s "${name}_spades/scaffolds.fasta" ]]; then
       cp ${name}_spades/scaffolds.fasta ${name}_spades/${name}-spades-assembly.fa
     else
       cp ${name}_spades/contigs.fasta ${name}_spades/${name}-spades-assembly.fa
