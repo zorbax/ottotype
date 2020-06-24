@@ -37,7 +37,7 @@ plasmids(){
     cp ASSEMBLY/$name-idba-assembly.fa ${name}.fna
     grep -q "$name" PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
 
-    if [ $? -eq 0 ]; then
+    if [[ $? -eq 0 ]]; then
       docker run --rm -it -v $(pwd):/data -w /data \
             -u $(id -u):$(id -g) plasmidid plasmidID.sh \
             -1 ${r1} -2 ${r2} -T $(nproc) \
@@ -50,7 +50,7 @@ plasmids(){
                sed 's/chr - //' | cut -d\. -f1 | tr '\n' ' ' | sed 's/ $//')
       echo -e "$name\t$result" >> RESULTS/plasmids_${run_name}.tsv
 
-      if [ ! -f "$out" ]; then
+      if [[ ! -f "$out" ]]; then
         rm -rf PLASMIDS_${run_name}/${name}
         echo -e "${name}\tNF" >> $file
       fi
