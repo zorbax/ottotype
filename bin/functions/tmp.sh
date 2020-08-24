@@ -1,23 +1,25 @@
 #!/bin/bash
 
 tmpmk(){
-    if [[ -O $PWD/TMP && -d $PWD/TMP ]]; then
-        TMPDIR=$PWD/TMP
+    # Create temporary directory
+    if [[ -O $PWD/tmp && -d $PWD/tmp ]]; then
+        TMPDIR=$PWD/tmp
     else
-        rm -rf $PWD/TMP 2> /dev/null
-        mkdir -p $PWD/TMP
-        TMPDIR=$(mktemp -d $PWD/TMP/XXXX)
+        rm -rf $PWD/tmp 2> /dev/null
+        mkdir -p $PWD/tmp
+        TMPDIR=$(mktemp -d $PWD/tmp/XXXX)
     fi
 
-    TMP=$TMPDIR
-    TEMP=$TMPDIR
+    local TMP=$TMPDIR
+    local TEMP=$TMPDIR
     export TMPDIR TMP TEMP
 }
 
 tmprm(){
-  TMPDIR=$PWD/TMP
+    # Remove temporary directory
+    TMPDIR=$PWD/tmp
 
-  if [[ -O $TMPDIR && -d $TMPDIR ]]; then
-    rm -rf $TMPDIR/*
-  fi
+    if [[ -O $TMPDIR && -d $TMPDIR ]]; then
+        rm -rf $TMPDIR
+    fi
 }
