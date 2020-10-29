@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env  python3
 
 from pathlib import Path
 import argparse
@@ -66,10 +66,9 @@ if __name__ == '__main__':
     parser.add_argument("-freq", action="store_true",
                         help="Translate without uniqueness")
 
+    args = parser.parse_args()
+    main()
+
     if len(sys.argv) == 1:
         parser.print_help()
     sys.exit(1)
-
-    args = parser.parse_args()
-
-    main()
