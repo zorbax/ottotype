@@ -1,6 +1,6 @@
 #!/bin/bash
 
-find -maxdepth 1 -name "*fastq.gz" -type f -or -type l | \
+find . -maxdepth 1 -name "*fastq.gz" -type f -or -type l | \
      rename 's/_L001//; s/_001//; s/_1.fastq/_S01_R1.fastq/;
      s/_2.fastq/_S01_R2.fastq/'
 
@@ -11,7 +11,7 @@ trimming() {
   do
     r2=${r1/R1/R2}
     name=${r1%%_R1*}
-    trimmomatic PE -phred33 -threads $(nproc) $r1 $r2 \
+    trimmomatic PE -phred33 -threads "$(nproc)" $r1 $r2 \
               TRIMMING/${name}_R1.trim.fastq.gz TRIMMING/1U2U/${name}.1U.trim.fastq.gz \
               TRIMMING/${name}_R2.trim.fastq.gz TRIMMING/1U2U/${name}.2U.trim.fastq.gz \
               SLIDINGWINDOW:4:20 MINLEN:70 &> ${name}.trim.log
@@ -42,7 +42,7 @@ assembly_spades(){
 done
 }
 
-if [ ! -d "ASSEMBLY" ]; then
+if [[ ! -d "ASSEMBLY" ]]; then
   trimming && assembly_spades
 else
   samples=$(ls *fastq.gz | cut -d\_ -f1,2 | sort | uniq)
@@ -93,7 +93,7 @@ do
   plasmid_acc=$(echo $hit | cut -d ' ' -f2)
   sample_name=$( echo $i | cut -d\_ -f1,2)
 
-  if [ -z "$plasmid_acc" ]; then
+  if [[ -z "$plasmid_acc" ]]; then
     echo -e "$sample_name\tNF"
   else
     description=$(cat $plasmid_db | grep -m 1 -F $plasmid_acc | \
@@ -113,7 +113,7 @@ do
   cp ASSEMBLY/$name-spades-assembly.fa ${name}.fna
   grep -q "$name" PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
 
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     docker run --rm -it -v $(pwd):/data -w /data \
           -u $(id -u):$(id -g) plasmidid plasmidID.sh \
           -1 ${r1} -2 ${r2} -T $(nproc) \
@@ -126,7 +126,7 @@ do
     out="PLASMIDS_${run_name}/${name}/images/${name}_summary.png"
     file=PLASMIDS_${run_name}/plasmid_id_NF_${run_name}.tsv
 
-    if [ ! -f "$out" ]; then
+    if [[ ! -f "$out" ]]; then
       rm -rf PLASMIDS_${run_name}/${name}
       echo -e "${name}\tNF" >> $file
     fi
@@ -135,7 +135,7 @@ do
   fi
 done
 
-if [ ! -s "$file" ]; then
+if [[ ! -s "$file" ]]; then
   rm -f $file 2> /dev/null
 fi
 
