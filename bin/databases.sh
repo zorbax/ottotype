@@ -139,5 +139,5 @@ elif [ ! -f "$plasmid_db" ]; then
   cd-hit-est -i plasmid.complete."$(date +%F)".fna \
              -o plasmid.complete.nr100.fna \
              -c 1 -T "$(nproc)" -M $memory
-  rm *fna.clstr
+  rm ./*fna.clstr
 fi
