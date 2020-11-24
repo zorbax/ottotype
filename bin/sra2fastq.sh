@@ -27,7 +27,6 @@ do
         echo -e "${i}\t${k}"
         fastq-dump --outdir fastq --skip-technical --readids --read-filter pass \
             --dumpbase --clip --split-3--gzip ${k}
-        # fasterq-dump ${k} -t /dev/shm -e $(nproc)
         # shellcheck disable=SC2035
         rename 's/_1.fastq/_S01_R1_L001.fastq/ ; s/_2.fastq/_S01_R2_L001.fastq/' *gz
     done
