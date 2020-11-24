@@ -1,21 +1,21 @@
 #!/bin/bash
 
 display_usage(){
-  echo -e "\nUsage:"
-  echo -e "\t$(basename $0) ARGannot_rVERSION.fasta\n"
+    echo -e "\nUsage:"
+    echo -e "\t$(basename $0) ARGannot_rVERSION.fasta\n"
 }
 
 if [[ $# -le 1 ]]; then
-  display_usage
-  exit 1
+    display_usage
+    exit 1
 fi
 
 
 grep < $1 \> | sed 's/ /;/' | \
-  tr ';' '\t' | awk -v OFS='\t' '{ print $5, $4}' | \
-  sed 's/Agly/AGly/g' | tee >( sort -k1,2 \
-  > antibiotics_code.v3.tsv) >( cut -f1 | sort | \
-  uniq > categories.txt) > /dev/null
+    tr ';' '\t' | awk -v OFS='\t' '{ print $5, $4}' | \
+    sed 's/Agly/AGly/g' | tee >( sort -k1,2 \
+    > antibiotics_code.v3.tsv) >( cut -f1 | sort | \
+    uniq > categories.txt) > /dev/null
 
 samples=(
          "AGly:Aminoglucósidos" "Bla:Betalactámicos"
@@ -28,14 +28,14 @@ samples=(
          "Tmt:Trimetroprima"
         )
 
-for i in $(cat categories.txt)
+for i in $(< categories.txt)
 do
     for k in "${samples[@]}"
     do
         key="${k%%:*}"
         val="${k##*:}"
 
-        if [[ ${i} == ${key} ]] ; then
+        if [[ ${i} == "${key}" ]] ; then
             sed -i "s/${i}/${val}/" antibiotics_code.v3.tsv
         fi
     done
