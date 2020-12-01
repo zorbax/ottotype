@@ -14,7 +14,7 @@ screen_tax() {
 
   for i in *R1.fastq.gz
   do
-    acc=$(minimap2 -t $(nproc) -x sr $dbNCBI $i 2> /dev/null | \
+    acc=$(minimap2 -t "$(nproc)" -x sr $dbNCBI $i 2> /dev/null | \
           awk -F "\t" '$12 > 0 { print }' | cut -f 6 | sort | uniq -c | \
           sort -nr | head -1 | sed 's/^ *//' | cut -d ' ' -f 2)
 
@@ -29,10 +29,10 @@ screen_tax() {
     fi
   done > screen_tax_raw_ncbi.txt
 
-  cat screen_tax_raw_ncbi.txt | grep "Reads\|Species" | sed 's/ /#/' | \
+  grep "Reads\|Species" screen_tax_raw_ncbi.txt | sed 's/ /#/' | \
       cut -d\# -f2 | grep -B1 Salmonella | sed 's/--//; /^$/d' | paste - - | \
       sort -k1 > salm_id_ncbi.txt 2>/dev/null
-  cat screen_tax_raw_ncbi.txt | grep "Reads\|Species" | sed 's/ /#/' | \
+      grep "Reads\|Species" screen_tax_raw_ncbi.txt | sed 's/ /#/' | \
       cut -d\# -f2 | sed 's/--//; /^$/d' | paste - - | grep -v Salmonella | \
       sed '/^$/d' | sort -k1 > nosalm_id_ncbi.txt 2>/dev/null
 
@@ -41,9 +41,10 @@ screen_tax() {
     > salm-like.txt 2>/dev/null
   else
     if [ -s "salm_id.txt" ]; then
-      echo $(sort -k1 salm_id.txt | cut -f1) | tr ' ' '\n' > salm-like.txt 2>/dev/null
+      sort -k1 salm_id.txt | cut -f1 | tr ' ' '\n' > salm-like.txt 2>/dev/null
     else
-      echo $(cut -f1 salm_id_ncbi.txt) | tr ' ' '\n' > salm-like.txt 2>/dev/null
+      cut -f1 salm_id_ncbi.txt | tr ' ' '\n' > salm-like.txt 2>/dev/null
+
     fi
   fi
 
