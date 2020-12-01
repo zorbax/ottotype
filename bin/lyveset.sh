@@ -9,30 +9,30 @@ echo "=============================="
 echo ""
 
 display_usage() {
-  echo -e "\nUsage:"
-  echo -e "\t$(basename $0) -r reference.fna"
-  echo -e "\t$(basename $0) -r reference.fna -d [Docker enabled]"
-  echo -e "\t$(basename $0) -n [Only trim and combo-clean]\n"
+    echo -e "\nUsage:"
+    echo -e "\t$(basename $0) -r reference.fna"
+    echo -e "\t$(basename $0) -r reference.fna -d [Docker enabled]"
+    echo -e "\t$(basename $0) -n [Only trim and combo-clean]\n"
 }
 
 tmpmk(){
-  if [[ -O $PWD/tmp && -d $PWD/tmp ]]; then
-    TMPDIR=$PWD/tmp
-  else
-    rm -rf $PWD/tmp 2> /dev/null
-    mkdir -p $PWD/tmp
-    TMPDIR=$(mktemp -d $PWD/tmp/XXXX)
-  fi
+    if [[ -O $PWD/tmp && -d $PWD/tmp ]]; then
+        TMPDIR=$PWD/tmp
+    else
+        rm -rf $PWD/tmp 2> /dev/null
+        mkdir -p $PWD/tmp
+        TMPDIR=$(mktemp -d $PWD/tmp/XXXX)
+    fi
 
-  TMP=$TMPDIR
-  TEMP=$TMPDIR
-  export TMPDIR TMP TEMP
+    TMP=$TMPDIR
+    TEMP=$TMPDIR
+    export TMPDIR TMP TEMP
 }
 
 tmprm(){
-  if [[ -O $TMPDIR && -d $TMPDIR ]]; then
-    rm -rf $TMPDIR/*
-  fi
+    if [[ -O $TMPDIR && -d $TMPDIR ]]; then
+        rm -rf "${TMPDIR:?}/"*
+    fi
 }
 
 use_docker=false
@@ -40,19 +40,19 @@ no_ref=false
 
 while getopts ":r:dnh" opt
 do
-  case $opt in
-    r) reference="$OPTARG"
-    ;;
-    d) use_docker=true
-    ;;
-    n) no_ref=true
-    ;;
-    h) display_usage
-    ;;
-    ?) echo "Invalid option -$OPTARG" >&2
-       exit 1
-    ;;
-  esac
+    case $opt in
+        r ) reference="$OPTARG"
+            ;;
+        d ) use_docker=true
+            ;;
+        n ) no_ref=true
+            ;;
+        h ) display_usage
+            ;;
+        ? ) echo "Invalid option -$OPTARG" >&2
+            exit 1
+            ;;
+    esac
 done
 
 if [ $OPTIND -eq 1 ]; then
@@ -113,7 +113,7 @@ if [ $use_docker == true ]; then
     for i in $(ls *fastq.gz | cut -d\_ -f1 | sort | uniq )
     do
       echo "Trimming $i"
-      $docker_run lyveset trimmomatic PE -phred33 -threads $(nproc) \
+      $docker_run lyveset trimmomatic PE -phred33 -threads "$(nproc)" \
             ${i}_R1.fastq.gz ${i}_R2.fastq.gz \
             ${i}_R1.trim.fastq.gz ${i}.1U.trim.gz \
             ${i}_R2.trim.fastq.gz ${i}.2U.trim.gz \
@@ -121,7 +121,7 @@ if [ $use_docker == true ]; then
       echo "Combo"
       paste <(zcat ${i}_R1.trim.fastq.gz ) <(zcat ${i}_R2.trim.fastq.gz) | \
          paste - - - - | awk -v OFS="\n" -v FS="\t" '{ print $1, $3, $5, $7, \
-         $2, $4, $6, $8 }' | pigz --best --processes $(nproc) > ${i}_combo.fastq.gz
+         $2, $4, $6, $8 }' | pigz --best --processes "$(nproc)" > ${i}_combo.fastq.gz
       rm *trim*
       echo "TrimClean"
       $docker_run lyveset run_assembly_trimClean.pl -i ${i}_combo.fastq.gz \
@@ -142,7 +142,7 @@ if [ $use_docker == true ]; then
     echo "Set"
     $docker_run lyveset launch_set.pl set_$(basename `pwd`) -ref "$reference" \
               --min_coverage 20 --min_alt_frac 0.95 --allowedFlanking 5 \
-              --mask-phages 1 --numcpus $(nproc) &>/dev/null
+              --mask-phages 1 --numcpus "$(nproc)" &>/dev/null
     rm *cleaned.fastq.gz
   fi
 
@@ -183,7 +183,7 @@ else
     for i in $(ls *fastq.gz | cut -d\_ -f1 | sort | uniq )
     do
       echo "Trimming $i"
-      trimmomatic PE -phred33 -threads $(nproc) \
+      trimmomatic PE -phred33 -threads "$(nproc)" \
           ${i}_R1.fastq.gz ${i}_R2.fastq.gz \
           ${i}_R1.trim.fastq.gz ${i}.1U.trim.gz \
           ${i}_R2.trim.fastq.gz ${i}.2U.trim.gz \
@@ -191,7 +191,7 @@ else
       echo "Combo"
       paste <(zcat ${i}_R1.trim.fastq.gz ) <(zcat ${i}_R2.trim.fastq.gz) | \
          paste - - - - | awk -v OFS="\n" -v FS="\t" '{ print $1, $3, $5, $7, \
-         $2, $4, $6, $8 }' | pigz --best --processes $(nproc) > ${i}_combo.fastq.gz
+         $2, $4, $6, $8 }' | pigz --best --processes "$(nproc)" > ${i}_combo.fastq.gz
       rm *trim*
       echo "TrimClean"
       run_assembly_trimClean.pl -i ${i}_combo.fastq.gz -p 2 -quieter --nosingletons \
@@ -212,7 +212,7 @@ else
     echo "Set"
     launch_set.pl set_$(basename `pwd`) -ref "$reference" --min_coverage 20 \
                 --min_alt_frac 0.95 --allowedFlanking 5 --mask-phages 1 \
-                --numcpus $(nproc) &>/dev/null
+                --numcpus "$(nproc)" &>/dev/null
   fi
   echo "DONE"
   tmprm
