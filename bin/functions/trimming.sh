@@ -1,4 +1,4 @@
-#!/bin/baslocal h
+#!/bin/bash
 
 trimming() {
 
