@@ -141,3 +141,8 @@ elif [ ! -f "$plasmid_db" ]; then
              -c 1 -T "$(nproc)" -M $memory
   rm ./*fna.clstr
 fi
+
+## Antibiotics
+iwget http://purl.obolibrary.org/obo/aro.owl
+git clone https://bitbucket.org/genomicepidemiology/resfinder_db
+match_resfinder_names.py
