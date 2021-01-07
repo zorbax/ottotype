@@ -11,18 +11,18 @@ end_tm(){
     echo -e "\n\n========"
     echo "  DONE"
     echo -e "========\n\n"
-    R=$(($(date +%s)-$T))
-    D=$((R/60/60/24))
-    H=$((R/60/60%24))
-    M=$((R/60%60))
-    S=$((R%60))
+    local R=$(($(date +%s) - T))
+    local D=$((R/60/60/24))
+    local H=$((R/60/60%24))
+    local M=$((R/60%60))
+    local S=$((R%60))
 
     printf 'CMD-> %s\n' "$0"
     printf 'RUNTIME-> '
-    (( $D > 0 )) && printf '%d d ' ${D}
-    (( $H > 0 )) && printf '%d h ' ${H}
-    (( $M > 0 )) && printf '%d m ' ${M}
-    (( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
+    (( D > 0 )) && printf '%d d ' ${D}
+    (( H > 0 )) && printf '%d h ' ${H}
+    (( M > 0 )) && printf '%d m ' ${M}
+    (( D > 0 || H > 0 || M > 0 )) && printf 'and '
     printf '%d s\n' ${S}
 }
 
@@ -31,8 +31,8 @@ tm() {
     local T=$(date +%s)
     local command=("$@")
 
-    rc=$?
-    local R=$(($(date +%s)-$ßT))
+    local rc=$?
+    local R=$(($(date +%s) - T))
     local D=$((R/60/60/24))
     local H=$((R/60/60%24))
     local M=$((R/60%60))
@@ -40,10 +40,10 @@ tm() {
 
     printf 'CMD-> %s\n' "${command[@]}"
     printf 'RUNTIME-> '
-    (( $D > 0 )) && printf '%d d ' ${D}
-    (( $H > 0 )) && printf '%d h ' ${H}
-    (( $M > 0 )) && printf '%d m ' ${M}
-    (( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
+    (( D > 0 )) && printf '%d d ' ${D}
+    (( H > 0 )) && printf '%d h ' ${H}
+    (( M > 0 )) && printf '%d m ' ${M}
+    (( D > 0 || H > 0 || M > 0 )) && printf 'and '
     printf '%d s\n' ${S}
     return ${rc}
 }
