@@ -17,21 +17,23 @@ logfile() {
     fi
 
     cat <<EOF >${log_file}
-====================================
-Serotyping pipeline from SSB-CNRDOGM
-====================================
+==================================
+  ATGenomics Serotyping Pipeline
+==================================
 EOF
-    echo -e "\nLOG FILE OTTOTYPE" >>${log_file}
-    date +"%Y-%m-%d %H:%M" >>${log_file}
+    echo -e "\nLOG FILE OTTOTYPE" >> ${log_file}
+    date +"%Y-%m-%d %H:%M" >> ${log_file}
 }
 
 logfile
-start_tm >>${log_file}
+start_tm >> ${log_file}
 tmpmk
 
 run_name=$(basename "$(pwd)" | cut -d '_' -f1)
 echo ${run_name}
 
+if [[ -z $CONDA_PREFIX ]]; then
+    alias R-
 #TEST
 # check if change names and send output to log
 # check if send fail to log when fail in rename
