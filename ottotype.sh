@@ -31,9 +31,6 @@ tmpmk
 
 run_name=$(basename "$(pwd)" | cut -d '_' -f1)
 echo ${run_name}
-
-if [[ -z $CONDA_PREFIX ]]; then
-    alias R-
 #TEST
 # check if change names and send output to log
 # check if send fail to log when fail in rename
