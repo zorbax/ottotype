@@ -146,3 +146,6 @@ fi
 iwget http://purl.obolibrary.org/obo/aro.owl
 git clone https://bitbucket.org/genomicepidemiology/resfinder_db
 match_resfinder_names.py
+conda create -n listeria -yc bioconda lissero
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/002/912/285/GCF_002912285.1_ASM291228v1/GCF_002912285.1_ASM291228v1_genomic.fna.gz
+lissero GCF_002912285.1_ASM291228v1_genomic.fna.gz
