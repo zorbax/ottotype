@@ -2,22 +2,24 @@
 
 antibiotics(){
 
-    run_name=$(basename $(pwd) | cut -d\_ -f1)
+    local run_name
+    run_name=$(basename "$(pwd)" | cut -d\_ -f1)
     mkdir -p OUTPUT RESULTS ANTIBIOTICS_${run_name}
 
+    local repo docker_cmd
     repo="https://raw.githubusercontent.com/CNRDOGM"
     wget -q -nc ${repo}/srst2/master/data/ARGannot_r3.fasta
     docker_cmd="docker run --rm -it -v $(pwd):/data -w /data"
 
-    ${docker_cmd} srst2 srst2 --log --output /data/SRST2 --input_pe *fastq.gz \
+    ${docker_cmd} srst2 srst2 --log --output /data/SRST2 --input_pe ./*fastq.gz \
                   --forward R1 --reverse R2 --gene_db ARGannot_r3.fasta \
-                  --threads $(nproc) &> /dev/null
+                  --threads "$(nproc)" &> /dev/null
 
     find . -maxdepth 1 -name "SRST2_*" -type f -not -path "ANTIBIOTICS_$run_name/*" \
             -exec mv {} ANTIBIOTICS_${run_name}/ \;
 
-    cat ANTIBIOTICS_${run_name}/SRST2__genes__ARGannot_r3__results.txt | \
-            tail -n +2 | sed 's/[?*]//g' | sed -E 's/_S[0-9]{1,}_//' | \
+    tail -n +2 ANTIBIOTICS_${run_name}/SRST2__genes__ARGannot_r3__results.txt | \
+            sed 's/[?*]//g' | sed -E 's/_S[0-9]{1,}_//' | \
             perl -pe "s/\t\-/#/g; s/\#{1,}//g; s/\_[0-9]{1,}//g; s/\'\'/\-/g;
             s/f{3,}//" | sort > RESULTS/antibiotics_${run_name}_argannot.tsv
 
@@ -31,6 +33,7 @@ antibiotics(){
     #megares
     for r1 in *R1.fastq.gz
     do
+        local r2 name
         r2="${r1/R1/R2}"
         name="${r1%%_R1*}"
         ${docker_cmd} ariba ariba run /data/card.prepareref \
@@ -38,7 +41,7 @@ antibiotics(){
         mv ${name}_card ANTIBIOTICS_${run_name}
     done
 
-    rm -rf card.* *ARGannot*{bt2,fasta,fai} SRST2.log
+    rm -rf card.* ./*ARGannot*{bt2,fasta,fai} SRST2.log
     ${docker_cmd} ariba ariba summary --preset all out.summary \
-                    $(find ARIBA_PIPELINE/ -type f -name report.tsv -printf "%p ")
+                    "$(find ARIBA_PIPELINE/ -type f -name report.tsv -printf "%p ")"
 }

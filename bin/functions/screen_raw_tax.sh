@@ -9,11 +9,12 @@ screen_tax() {
             else
                 { print $1, $6 > "nosalm_id.txt"}
             }'
-
+    local dbNCBI
     dbNCBI="/mnt/disk1/bin/16S/NCBI.gz"
 
     for i in *R1.fastq.gz
     do
+        local acc
         acc=$(minimap2 -t "$(nproc)" -x sr $dbNCBI $i 2> /dev/null | \
                     awk -F "\t" '$12 > 0 { print }' | cut -f 6 | sort | uniq -c | \
                     sort -nr | head -1 | sed 's/^ *//' | cut -d ' ' -f 2)
@@ -21,8 +22,9 @@ screen_tax() {
         if [ -z "$acc" ]; then
             echo "No match found!"
         else
-            echo "Reads: $( echo $i | cut -d\_ -f1,2)"
+            echo "Reads: $( echo $i | cut -d '_' -f1,2)"
             echo "Top hit: $acc"
+            local hit
             hit=$(gzip -c -d -f $dbNCBI | grep -m 1 -F $acc)
             echo "Description: $hit"
             echo "Species: $(echo $hit | cut -d ' ' -f2,3)"

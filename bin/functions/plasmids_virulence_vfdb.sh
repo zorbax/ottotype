@@ -1,7 +1,7 @@
 #!/bin/bash
 
 plas_vir_vfdb(){
-
+    local docker_cmd
     docker_cmd="docker run --rm -it -v $(pwd):/data -w /data"
 
     for i in virulencefinder vfdb_full plasmidfinder
@@ -12,6 +12,7 @@ plas_vir_vfdb(){
 
     for r1 in *R1.fastq.gz
     do
+        local r2 name
         r2="${r1/R1/R2}"
         name="${r1%%_R1*}"
         for k in virulencefinder vfdb_full plasmidfinder
