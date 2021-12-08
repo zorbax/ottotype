@@ -3,7 +3,7 @@
 plasmids(){
     local plasmid_db run_name
     plasmid_db="/mnt/disk1/bin/plasmidid_db/plasmid.complete.nr100.fna"
-    run_name=$(basename $(pwd)" | cut -d\_ -f1)
+    run_name=$(basename "$(pwd)" | cut -d '_' -f1)
     mkdir -p PLASMIDS_${run_name} RESULTS
 
     for i in *R1.fastq.gz
@@ -38,9 +38,8 @@ plasmids(){
         r2="${r1/R1/R2}"
         name="${r1%%_R1*}"
         cp ASSEMBLY/$name-idba-assembly.fa ${name}.fna
-        grep -q "$name" PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
 
-        if [[ $? -eq 0 ]]; then
+        if ! grep -q "$name" PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv; then
             docker run --rm -it -v "$(pwd)":/data -w /data \
                         -u "$(ig -u)":"$(ig -g)" plasmidid plasmidID.sh \
                         -1 ${r1} -2 ${r2} -T "$(nproc)" \
