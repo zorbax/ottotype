@@ -11,11 +11,12 @@ end_tm(){
     echo -e "\n\n========"
     echo "  DONE"
     echo -e "========\n\n"
-    local R=$(($(date +%s) - T))
-    local D=$((R/60/60/24))
-    local H=$((R/60/60%24))
-    local M=$((R/60%60))
-    local S=$((R%60))
+    local R D H M S
+    R=$(($(date +%s) - T))
+    D=$((R/60/60/24))
+    H=$((R/60/60%24))
+    M=$((R/60%60))
+    S=$((R%60))
 
     printf 'CMD-> %s\n' "$0"
     printf 'RUNTIME-> '
@@ -28,15 +29,15 @@ end_tm(){
 
 tm() {
     # Get starting time ddhhmm
-    local T=$(date +%s)
-    local command=("$@")
-
-    local rc=$?
-    local R=$(($(date +%s) - T))
-    local D=$((R/60/60/24))
-    local H=$((R/60/60%24))
-    local M=$((R/60%60))
-    local S=$((R%60))
+    local T command rc R D H M S
+    T=$(date +%s)
+    command=("$@")
+    rc=$?
+    R=$(($(date +%s) - T))
+    D=$((R/60/60/24))
+    H=$((R/60/60%24))
+    M=$((R/60%60))
+    S=$((R%60))
 
     printf 'CMD-> %s\n' "${command[@]}"
     printf 'RUNTIME-> '
@@ -50,10 +51,11 @@ tm() {
 
 error(){
     # create error log file
-    local parent_lineno="$1"
-    local script="$2"
-    local message="$3"
-    local code="${4:-1}"
+    local parent_lineno script message code
+    parent_lineno="$1"
+    script="$2"
+    message="$3"
+    code="${4:-1}"
 
     if [[ -n "$message" ]] ; then
         echo -e "\n---------------------------------------\n"
