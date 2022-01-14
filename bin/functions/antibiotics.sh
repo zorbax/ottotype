@@ -3,7 +3,7 @@
 antibiotics(){
 
     local run_name
-    run_name=$(basename "$(pwd)" | cut -d\_ -f1)
+    run_name=$(basename "$(pwd)" | cut -d '_' -f1)
     mkdir -p OUTPUT RESULTS ANTIBIOTICS_${run_name}
 
     local repo docker_cmd

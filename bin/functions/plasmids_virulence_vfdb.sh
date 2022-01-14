@@ -7,7 +7,8 @@ plas_vir_vfdb(){
     for i in virulencefinder vfdb_full plasmidfinder
     do
         ${docker_cmd} ariba ariba getref ${i} ${i} &> /dev/null
-        ${docker_cmd} ariba ariba prepareref -f /data/${i}.fa -m /data/${i}.tsv ${i}.prepareref &> /dev/null
+        ${docker_cmd} ariba ariba prepareref -f /data/${i}.fa \
+            -m /data/${i}.tsv ${i}.prepareref &> /dev/null
     done
 
     for r1 in *R1.fastq.gz

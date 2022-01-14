@@ -114,6 +114,7 @@ do
     cp ASSEMBLY/$name-spades-assembly.fa ${name}.fna
     grep -q "$name" PLASMIDS_${run_name}/plasmid_candidates_${run_name}.tsv
 
+    # shellcheck disable=SC2181
     if [[ $? -eq 0 ]]; then
         docker run --rm -it -v "$(pwd)":/data -w /data \
             -u "$(id -u)":"$(id -g)" plasmidid plasmidID.sh \

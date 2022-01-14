@@ -2,6 +2,7 @@
 
 #echo -e "\n#Executing" ${FUNCNAME[0]} "\n"
 # TODO: update to SeqSero2
+# shellcheck disable=SC2012
 run_salmonella() {
     local run_name
     run_name=$(basename "$(pwd)" | cut -d '_' -f1)
@@ -20,6 +21,7 @@ run_salmonella() {
     cut -f1 < $file | while read -r line
     do
         if [[ "find . -type l -name "${line}*"" ]]; then
+            local R1 R2
             R1=$(ls -lt ${line}* | awk '{ print $NF }' | awk '($1 ~ /R1/) { print $1 }')
             R2=$(ls -lt ${line}* | awk '{ print $NF }' | awk '($1 ~ /R2/) { print $1 }')
             $docker_cmd seqsero SeqSero.py -m 2 -i $R1 $R2 && \

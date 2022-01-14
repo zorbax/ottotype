@@ -2,7 +2,7 @@
 
 kmer_finder(){
     local run_name KmerFinder_DB kraw kgenome
-    run_name=$(basename ""$(pwd)"" | cut -d '_' -f1)
+    run_name=$(basename "$(pwd)" | cut -d '_' -f1)
     mkdir -p KMERFINDER_${run_name}/{raw,genome}_${run_name} RESULTS/
 
     KmerFinder_DB=/mnt/disk1/bin/KmerFinder_DB

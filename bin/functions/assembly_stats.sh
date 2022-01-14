@@ -7,7 +7,7 @@ bwa mem -t "$(nproc)" ${i} \
 assembly_stats_cov() {
 
     local run_name
-    run_name=$(basename "$(pwd)" | cut -d\_ -f1)
+    run_name=$(basename "$(pwd)" | cut -d '_' -f1)
     mkdir -p OUTPUT ASSEMBLY/Stats RESULTS
     echo -e "Assembly\tNumber_of_contigs\tCoverage\tAssembly_size\tLargest_contig\tN50\tN90" \
             > assembly_$run_name.stats
@@ -16,8 +16,8 @@ assembly_stats_cov() {
     do
         local assembly name reads
         assembly=ASSEMBLY/$(basename "$i" | cut -d '-' -f3 --complement)
-        name=$(echo $assembly | cut -d\/ -f2)
-        reads=TRIMMING/$(basename $i | cut -d\- -f1)
+        name=$(echo $assembly | cut -d '/' -f2)
+        reads=TRIMMING/$(basename $i | cut -d '-' -f1)
 
         echo -e "Assembly:\t${name}" | tee ${name}.stats
         bwa index -a bwtsw $i -p ${name}

@@ -11,7 +11,7 @@ lis_type(){
 
     $docker_cmd srst2 getmlst.py --species "Listeria monocytogenes" &>/dev/null
 
-    $docker_cmd srst2 srst2 --log --output /data/SRST2_Lys --input_pe *fastq.gz \
+    $docker_cmd srst2 srst2 --log --output /data/SRST2_Lys --input_pe ./*fastq.gz \
         --forward R1 --reverse R2 --mlst_db Listeria_monocytogenes.fasta \
         --mlst_definitions lmonocytogenes.txt \
         --mlst_delimiter '_' --threads "$(nproc)" &>/dev/null

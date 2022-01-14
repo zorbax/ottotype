@@ -8,6 +8,7 @@ screen_assembly_tax(){
 
     for i in ASSEMBLY/*assembly.fa
     do
+        local DB
         DB="$dbNCBI $dbRDP $dbSILVA"
         for k in "${DB[@]}"
         do

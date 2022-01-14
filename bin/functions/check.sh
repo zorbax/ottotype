@@ -28,15 +28,16 @@ EOF
 }
 
 check_connection(){
-    echo -e "\nNetwork Status\n" &>> $log_file
+    echo -e "\nNetwork Status\n"
+    local adress up
     adress=$(ip r | grep default | cut -d ' ' -f 3)
     up=$(ping -q -w 1 -c 1 "$adress" > /dev/null && echo ok || echo error)
     if [ "$up" == "ok" ]; then
-        echo -e "\nSESSION_TYPE = local\n" &>> $log_file
+        echo -e "\nSESSION_TYPE = local\n"
     elif [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-        echo -e "\nSESSION_TYPE = remote/ssh\n" &>> $log_file
+        echo -e "\nSESSION_TYPE = remote/ssh\n"
     else
-        echo -e "Network Error, please check your internet connection\n" &>> $log_file
+        echo -e "Network Error, please check your internet connection\n"
         exit 1
     fi
 }
@@ -63,7 +64,7 @@ check_dependencies(){
     done
 
     if [ $counter -gt 0 ]; then
-        printf "ERROR: $counter missing dependencies, aborting execution\n" &>> $log_file
+        printf "ERROR: $counter missing dependencies, aborting execution\n"
         exit 1
     fi
 }
